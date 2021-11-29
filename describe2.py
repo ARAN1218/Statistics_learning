@@ -6,7 +6,7 @@ def describe2(data1, data2):
     import matplotlib.pyplot as plt
     
     # 元データ出力
-    print(data1, data2)
+    print(data1, data2, sep="\n")
     
     # サンプルサイズ
     def length(data):
@@ -146,10 +146,11 @@ def describe2(data1, data2):
     
     # ランク付け
     # 同順位は平均順位をつけ、同順位の数も返り値で返す
-    def rank(data):
+    # 引数deliteはウィルコクソンの符号順位検定にて順位の整合性を合わせる為に指定した
+    def rank(data, delite=0):
         ranking = 0
         rank_num_list = []
-        l = length(data)
+        l = length(data) - delite
         reference, ranked = copy(data), copy(data)
         for d in data:
             count, rank_sum, rank_num = 0, 0, 0
@@ -218,6 +219,8 @@ def describe2(data1, data2):
         return m / (s/n)**0.5
     
     # ウェルチのt検定
+    # 対応なし2標本t検定であるが、こちらは等分散を仮定できない際に使用する
+    # 一説によれば、標本が等分散かどうかによらず利用しても問題ないらしい
     # ウェルチ=サタスウェイト（Welch=Satterthwaite）の式により近似自由度のt分布に従う
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
@@ -229,61 +232,85 @@ def describe2(data1, data2):
         v = int(((s1/n1) + (s2/n2))**2 / (s1**2/(n1**2*(n1-1)) + s2**2/(n2**2*(n2-1))))
         return t, v
     
-    # マン=ホイットニーのU検定-----------------未完成
-    # 2群間の中央値に差があるかを検定する
-    # サンプルサイズが十分に大きい時(n>20)、検定統計量zは標準正規分布に従うかどうかを考え、その有意性は正規分布表で確認できる
+    # 全データ同一ランク付け
+    def rank_all(data1, data2):
+        data_linked = list(data1) + list(data2)
+        data_linked, dup = rank(data_linked)
+        data1_len = length(data1)
+        data1_dec = data_linked[:data1_len]
+        data2_dec = data_linked[data1_len:]
+        return data1_dec, data2_dec
+    
+    # マン=ホイットニーのU検定
+    # 対応のない2群間の中央値に差があるかを検定する
+    # サンプルサイズが小さい時(n<=20)、検定統計量UはMann-Whitney検定表に基づいてp値を算出する
+    # サンプルサイズが十分に大きい時(n>20)、検定統計量zは標準正規分布に従うかどうかを考え、正規分布表に基づいてp値を算出する
+    # 両側検定なので、検定統計量が負の値でも絶対値を取って考えれば良い
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
     def mannwhitney_utest(data1, data2): # 標準正規分布に従うかどうかを考え、その有意性は正規分布表で確認できる
         n1, n2 = length(data1), length(data2)
-        r1, r2 = sum_value(rank(data1)[0]), sum_value(rank(data2)[0])
+        r1, r2 = rank_all(data1, data2)
+        r1, r2 = sum_value(r1), sum_value(r2)
+        # u1, u2の求め方はどちらでも良い
         #u1 = n1*n2 + ((n1*(n1+1)) / 2) - r1
         #u2 = n1*n2 + ((n2*(n2+1)) / 2) - r2
-        #u1 = r1 - (n1*(n1+1))/2
-        #u2 = r2 - (n2*(n2+1))/2
-        #u = u1 if (u1 < u2) else u2
+        u1 = r1 - (n1*(n1+1))/2
+        u2 = r2 - (n2*(n2+1))/2
+        U = u1 if (u1 < u2) else u2
         if (n1 <= 20 and n2 <= 20):
-            num_bigger_value = []
-
-            for i in data1:
-                # i よりも大きい値がの個数
-                bigger_temp = len(np.where(data2>i)[0])
-
-                # i と同じ値の個数（平均をとるので２で割る）
-                equal_temp = len(np.where(data2==i)[0]) / 2
-                num_bigger_value.append(bigger_temp + equal_temp)
-
-            U = np.array(num_bigger_value).sum()
             return U
-            
         else:
-            num_bigger_value = []
-
-            for i in data1:
-                bigger_temp = len(np.where(data2>i)[0])
-                equal_temp = len(np.where(data2==i)[0]) / 2
-                num_bigger_value.append(bigger_temp + equal_temp)
-
-            U = np.array(num_bigger_value).sum()
-            return U
+            z = (U - ((n1*n2)/2)) / (((n1*n2*(n1+n2+1)) / 12)**0.5)
+            return z
         
-    # ウィルコクソンの順位和検定-----------------未完成
-    # 2群間の中央値に差があるかを検定する
+    # ウィルコクソンの順位和検定
+    # 対応のない2群間の中央値に差があるかを検定する
     # ウィルコクソンの順位和検定の数表を参照して有意差があるかどうか判定する
+    # マン=ホイットニーのU検定と実質的に同じ計算をしているため、同じ結果が返ってくるはずである
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
     def wilcoxon_rstest(data1, data2):
         n1, n2 = length(data1), length(data2)
-        r1, r2 = sum_value(rank(data1)[0]), sum_value(rank(data2)[0])
+        r1, r2 = rank_all(data1, data2)
+        r1, r2 = sum_value(r1), sum_value(r2)
         if r1 < r2:
             w = r1
             ew = (n1*(n1+n2+1)) / 2
         else:
             w = r2
             ew = (n2*(n1+n2+1)) / 2
+        
         vw = (n1*n2*(n1+n2+1)) / 12
         return (ew-w) / (vw)**0.5
-            
+    
+    # ウィルコクソンの符号順位検定
+    # 対応のある2群間の中央値に差があるかを検定する
+    def wilcoxon_srtest(data1, data2):
+        data_diff = data1 - data2
+        count_p, count_n, delite = [], [], 0
+        for i in range(length(data1)):
+            if data_diff[i] > 0:
+                count_p += [i]
+            elif data_diff[i] < 0:
+                count_n += [i]
+                data_diff[i] = -data_diff[i]
+            else: #差が0の場合は取り除く
+                data_diff[i] = -999999
+                delite += 1
+        data_diff_ranked, dup = rank(data_diff, delite=delite)
+        
+        p_num, n_num = length(count_p), length(count_n)
+        r_sum = 0
+        if p_num >= n_num:
+            for n in count_n:
+                r_sum += data_diff_ranked[n]
+            return r_sum, (p_num+n_num) #順位が付けられたデータの組の数がNである
+        else:
+            for p in count_p:
+                r_sum += data_diff_ranked[p]
+            return r_sum, (p_num+n_num)
+
     
     df1 = pd.DataFrame({
         'count':length(data1),
@@ -310,7 +337,8 @@ def describe2(data1, data2):
         'dep_ttest.t':dependent_ttest(data1, data2),
         'welch.ttest':welch_ttest(data1, data2)[0], #自由度vのt分布表を見ること
         'mw_utest.u':mannwhitney_utest(data1, data2),
-        'w_rstest.tw':wilcoxon_rstest(data1, data2)
+        'w_rstest.tw':wilcoxon_rstest(data1, data2),
+        'w_srtest.tw':wilcoxon_srtest(data1, data2)[0]
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -328,19 +356,19 @@ def describe2(data1, data2):
         'max':max_value(data2),
         '25-75%':quartile_range(data2),
         'f_test':f_test(data1, data2)[1],
-        'welch.ttest':welch_ttest(data1, data2)[1]
+        'welch.ttest':welch_ttest(data1, data2)[1],
+        'w_srtest.tw':wilcoxon_srtest(data1, data2)[1]
     }, index=["data2"]).T
     
     return display(pd.concat([df1, df2], axis=1))
 
-from random import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ランダム分布
-data1 = pd.DataFrame([int(random() * 101) for i in range(100)], columns=["data1"])["data1"]
-data2 = pd.DataFrame([int(random() * 101) for i in range(100)], columns=["data2"])["data2"]
+# 確率分布からデータを生成
+data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(0, 1001, 100), columns=["data2"])["data2"]
 describe2(data1, data2)
 
 # 既存のライブラリで検証
