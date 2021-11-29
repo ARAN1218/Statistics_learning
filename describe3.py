@@ -6,7 +6,7 @@ def describe3(data1, data2, data3):
     import matplotlib.pyplot as plt
     
     # 元データ出力
-    print(data1, data2, data3)
+    print(data1, data2, data3, sep="\n")
 
     # サンプルサイズ
     def length(data):
@@ -190,6 +190,7 @@ def describe3(data1, data2, data3):
         return spearman * ((length(data1)-1)/(1-spearman**2))**0.5
     
     # 一元配置分散分析(ANalysis Of VAriance)
+    # 自由度(dfw, dfb)のF分布に従う
     def anova(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
@@ -213,33 +214,102 @@ def describe3(data1, data2, data3):
         
         return f, dfw, dfb
     
-    # クラスカル=ウォリス検定-----------------未完成
-    # 値がおかしい
+    # 反復測定分散分析(Repeated Measures ANOVA)
+    # 自由度(df_model, df_error)のF分布に従う
+    # ソース：https://www.spss-tutorials.com/repeated-measures-anova/
+    # scipyライブラリに反復測定分散分析を計算するモジュールが無かったが、以下のURLのテストデータで答えが一致した
+    # https://s-nako.work/ja/2020/01/paired-one-way-anova-and-multiple-comparisons-in-python/
+    def rm_anova(data1, data2, data3):
+        ss_within, count = 0, 0
+        for d1, d2, d3 in zip(data1, data2, data3):
+            m = mean([d1, d2, d3])
+            ss_within += (d1 - m)**2
+            ss_within += (d2 - m)**2
+            ss_within += (d3 - m)**2
+            
+        n = length(data1)
+        m1, m2, m3 = mean(data1), mean(data2), mean(data3)
+        m_grand = mean([m1, m2, m3])
+        ss_model = 0
+        for m in [m1, m2, m3]:
+            ss_model += (m - m_grand)**2
+        ss_model *= n
+        
+        ss_error = ss_within - ss_model
+        
+        k = 3
+        df_model = k - 1
+        df_error = (k-1)*(n-1)
+        
+        ms_model = ss_model / df_model
+        ms_error = ss_error / df_error
+        
+        F = ms_model / ms_error
+        return F, df_model, df_error
+        
+    
+    # 全データ同一ランク付け
+    # クラスカル=ウォリス検定の為に実装
+    def rank_all(data1, data2, data3):
+        data_linked = list(data1) + list(data2) + list(data3)
+        data_linked, dup = rank(data_linked)
+        data1_len, data2_len = length(data1), length(data2)
+        data1_dec = data_linked[:data1_len]
+        data2_dec = data_linked[data1_len:data1_len+data2_len]
+        data3_dec = data_linked[data1_len+data2_len:]
+        return data1_dec, data2_dec, data3_dec, dup
+    
+    # クラスカル=ウォリス検定-----------------ちょっとズレてる
     def kruskalwallis_test(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         ls = l1 + l2 + l3
         rank_sum, dup_sum = 0, 0
+        data1_dec, data2_dec, data3_dec, dup = rank_all(data1, data2, data3)
         
-        for data, l in zip([data1, data2, data3], [l1, l2, l3]):
-            ranked, dup = rank(data)
-            print(sum_value(ranked)**2 / l)
-            rank_sum += sum_value(ranked)**2 / l
+        for data_ranked, l in zip([data1_dec, data2_dec, data3_dec], [l1, l2, l3]):
+            rank_sum += sum_value(data_ranked)**2 / l
+            
+        if dup != []:
+            for d in dup:
+                dup_sum += d*d*d - d
         
-            if dup != []:
-                for d in dup:
-                    dup_sum += d*d*d - d
-                    
-        print("dup_sum:", dup_sum)
-        print("rank_sum", rank_sum)
         pre_h = (12 / (ls*(ls+1))) * rank_sum - (3*(ls+1))
         c = 1 - (dup_sum / (l*(l**2-1)))
         h = pre_h / c
         k = 3 - 1
         return h, k
-
+    
+    # インデックス毎のランク付け
+    # フリードマン検定の為に実装
+    def rank_index(data1, data2, data3):
+        data1_ranked, data2_ranked, data3_ranked = [], [], []
+        for d1, d2, d3 in zip(data1, data2, data3):
+            data_ranked, dup = rank([d1, d2, d3])
+            data1_ranked += [data_ranked[0]]
+            data2_ranked += [data_ranked[1]]
+            data3_ranked += [data_ranked[2]]
+        return data1_ranked, data2_ranked, data3_ranked
+    
+    # フリードマン検定
+    # ソース：https://sixsigmastudyguide.com/friedman-non-parametric-hypothesis-test/
+    def friedman_test(data1, data2, data3):
+        k = 3
+        n = length(data1)
+        data1_ranked, data2_ranked, data3_ranked = rank_index(data1, data2, data3)
+        print(data1_ranked)
+        
+        r2 = 0
+        for data_ranked in [data1_ranked, data2_ranked, data3_ranked]:
+            rank_sum = sum_value(data_ranked)**2
+            r2 += rank_sum
+            
+        x20 = (12 / (n*k*(k+1))) * r2 - 3*n*(k+1)
+        return x20, k-1
     
     anova_f, anova_dfw, anova_dfb = anova(data1, data2, data3)
+    rm_anova_f, rm_anova_df_model, rm_anova_df_error = rm_anova(data1, data2, data3)
     kw_h, kw_k = kruskalwallis_test(data1, data2, data3)
+    fm_x20, fm_k = friedman_test(data1, data2, data3)
     
     df1 = pd.DataFrame({
         'count':length(data1),
@@ -262,7 +332,9 @@ def describe3(data1, data2, data3):
         'spearman_cor':spearman_cor(data2, data3),
         'spearman_cor_test':spearman_cor_test(data2, data3),
         'anova':anova_f,
-        'kw_test':kw_h
+        'rm_anova':rm_anova_f,
+        'kw_test':kw_h,
+        'fm_test':fm_x20
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -286,7 +358,9 @@ def describe3(data1, data2, data3):
         'spearman_cor':spearman_cor(data1, data3),
         'spearman_cor_test':spearman_cor_test(data1, data3),
         'anova':anova_dfw,
-        'kw_test':kw_k
+        'rm_anova':rm_anova_df_model,
+        'kw_test':kw_k,
+        'fm_test':fm_k
     }, index=["data2"]).T
     
     df3 = pd.DataFrame({
@@ -309,25 +383,27 @@ def describe3(data1, data2, data3):
         'pearson_cor_test':pearson_cor_test(data1, data2), #自由度n1-n2+2のt分布表を見ること
         'spearman_cor':spearman_cor(data1, data2),
         'spearman_cor_test':spearman_cor_test(data1, data2),
-        'anova':anova_dfb
+        'anova':anova_dfb,
+        'rm_anova':rm_anova_df_error
     }, index=["data3"]).T
     
     return display(pd.concat([df1, df2, df3], axis=1))
 
-from random import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ランダム分布
-data1 = pd.DataFrame([int(random() * 11) for i in range(100)], columns=["data1"])["data1"]
-data2 = pd.DataFrame([int(random() * 11) for i in range(100)], columns=["data2"])["data2"]
-data3 = pd.DataFrame([int(random() * 11) for i in range(100)], columns=["data3"])["data3"]
+# 確率分布からデータを生成
+data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(0, 1001, 100), columns=["data2"])["data2"]
+data3 = pd.DataFrame(np.random.randint(0, 10001, 100), columns=["data3"])["data3"]
 describe3(data1, data2, data3)
 
 # 既存ライブラリで検証
 from scipy import stats as st
-print("PearsonrResult", st.pearsonr(data1, data2))
+print("PearsonrResult" + str(st.pearsonr(data1, data2)))
 print(st.spearmanr(data1, data2))
 print(st.f_oneway(data1, data2, data3))
+# 反復測定分散分析はscipyにないので割愛
 print(st.kruskal(data1, data2, data3))
+print(st.friedmanchisquare(data1, data2, data3))
