@@ -51,6 +51,10 @@ def describe1(data):
     def std_s(data):
         return var_s(data)**0.5
     
+    # 標準誤差
+    def std_e(data):
+        return std_s(data) / length(data)**0.5
+    
     # ソート（クイックソート）
     def quick_sort(data):
         n = length(data)
@@ -114,6 +118,7 @@ def describe1(data):
         'var.s':var_s(data),
         'std.p':std_p(data),
         'std.s':std_s(data),
+        'std_e':std_e(data),
         'min':min_value(data),
         '25%':quartile1(data),
         '50%':median(data),
