@@ -46,9 +46,14 @@ def describe2(data1, data2):
     def std_p(data):
         return var_p(data)**0.5
     
-    # 不偏標準偏差
+    # 不偏標準偏差..........................未完成？
+    # 単に不偏分散の平方根を取ったものは、厳密には「母標準偏差の不偏推定量」ではないらしい
     def std_s(data):
         return var_s(data)**0.5
+    
+    # 標準誤差
+    def std_e(data):
+        return std_s(data) / length(data)**0.5
     
     # ソート（クイックソート）
     def quick_sort(data):
@@ -104,7 +109,9 @@ def describe2(data1, data2):
         return quartile3(data) - quartile1(data)
     
     # 母共分散
+    # サンプルサイズが異なる場合、Errorを返す
     def cov_p(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         m1 = mean(data1)
         m2 = mean(data2)
         cov_p = 0
@@ -113,7 +120,9 @@ def describe2(data1, data2):
         return cov_p / length(data1)
     
     # 不偏共分散
+    # サンプルサイズが異なる場合、Errorを返す
     def cov_s(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         m1 = mean(data1)
         m2 = mean(data2)
         cov_s = 0
@@ -122,7 +131,9 @@ def describe2(data1, data2):
         return cov_s / (length(data1)-1)
     
     # ピアソン相関係数
+    # サンプルサイズが異なる場合、Errorを返す
     def pearson_cor(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         return cov_s(data1, data2) / (std_s(data1)*std_s(data2))
     
     # ピアソン無相関検定(検定統計量)
@@ -130,9 +141,12 @@ def describe2(data1, data2):
     # 帰無仮説：母集団のピアソン相関係数は0である(相関はない)
     # 対立仮説：母集団のピアソン相関係数は0以外である(相関がある)
     # 注：値がマイナスになるが、両側検定だから絶対値で考えてよい
+    # サンプルサイズが異なる場合、Errorを返す
     def pearson_cor_test(data1, data2):
         cor = pearson_cor(data1, data2)
-        if cor > 0:
+        if cor == 'Error':
+            return 'Error'
+        elif cor > 0:
             return (cor*((length(data1)-2)**0.5)) / ((1-(cor**2))**0.5)
         else:
             return (-cor*(length(data1)-2)**0.5) / ((1-cor**2)**0.5)
@@ -172,8 +186,10 @@ def describe2(data1, data2):
         return ranked, rank_num_list
     
     # スピアマン順位相関係数........................ちょっとだけズレがある
+    # サンプルサイズが異なる場合、Errorを返す
     def spearman_cor(data1, data2):
         n = length(data1)
+        if n != length(data2): return 'Error'
         rank1, a = rank(data1)
         rank2, b = rank(data2)
         spearman = 0
@@ -185,8 +201,10 @@ def describe2(data1, data2):
     # 自由度n-2のt分布に従う
     # 帰無仮説：母集団のスピアマン順位相関係数は0である(相関はない)
     # 対立仮説：母集団のスピアマン順位相関係数は0以外である(相関がある)
+    # サンプルサイズが異なる場合、Errorを返す
     def spearman_cor_test(data1, data2):
         spearman =  spearman_cor(data1, data2)
+        if spearman == 'Error': return 'Error'
         return spearman * ((length(data1)-1)/(1-spearman**2))**0.5
     
     # 等分散の検定(F比)
@@ -205,18 +223,20 @@ def describe2(data1, data2):
         m1, m2 = mean(data1), mean(data2)
         s1, s2 = std_s(data1), std_s(data2)
         s = ((n1-1)*s1**2 + (n2-1)*s2**2) / (n1+n2-2)
-        return (m1-m2) / (s * (1/n1 + 1/n2))**0.5
+        return (m1-m2) / (s * (1/n1 + 1/n2))**0.5, (n1+n2-1)
     
     # 対応あり2標本t検定
-    # 自由度n1+n2-1のt分布に従う
+    # 自由度n1-1のt分布に従う
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
+    # サンプルサイズが異なる場合、Errorを返す
     def dependent_ttest(data1, data2):
+        if length(data1) != length(data2): return 'Error', 'Error'
         diff = data1 - data2
         n = length(diff)
         m = mean(diff)
         s = var_s(diff)
-        return m / (s/n)**0.5
+        return m / (s/n)**0.5, (n-1)
     
     # ウェルチのt検定
     # 対応なし2標本t検定であるが、こちらは等分散を仮定できない際に使用する
@@ -286,7 +306,9 @@ def describe2(data1, data2):
     
     # ウィルコクソンの符号順位検定
     # 対応のある2群間の中央値に差があるかを検定する
+    # サンプルサイズが異なる場合、Errorを返す
     def wilcoxon_srtest(data1, data2):
+        if length(data1) != length(data2): return 'Error', 'Error'
         data_diff = data1 - data2
         count_p, count_n, delite = [], [], 0
         for i in range(length(data1)):
@@ -310,7 +332,13 @@ def describe2(data1, data2):
             for p in count_p:
                 r_sum += data_diff_ranked[p]
             return r_sum, (p_num+n_num)
-
+        
+    
+    f_test_f, f_test_df = f_test(data1, data2)
+    ind_ttest_t, ind_ttest_df = independent_ttest(data1, data2)
+    dep_ttest_t, dep_ttest_df = dependent_ttest(data1, data2)
+    welch_ttest_t, welch_ttest_v = welch_ttest(data1, data2)
+    wilcoxon_srtest_Tw, wilcoxon_srtest_df = wilcoxon_srtest(data1, data2)
     
     df1 = pd.DataFrame({
         'count':length(data1),
@@ -320,6 +348,7 @@ def describe2(data1, data2):
         'var.s':var_s(data1),
         'std.p':std_p(data1),
         'std.s':std_s(data1),
+        'std_e':std_e(data1),
         'min':min_value(data1),
         '25%':quartile1(data1),
         '50%':median(data1),
@@ -332,13 +361,13 @@ def describe2(data1, data2):
         'pearson_cor_test':pearson_cor_test(data1, data2), #自由度n1-n2+2のt分布表を見ること
         'spearman_cor':spearman_cor(data1, data2),
         'spearman_cor_test':spearman_cor_test(data1, data2),
-        'f_test':f_test(data1, data2)[0],
-        'indep_ttest.t':independent_ttest(data1, data2),
-        'dep_ttest.t':dependent_ttest(data1, data2),
-        'welch.ttest':welch_ttest(data1, data2)[0], #自由度vのt分布表を見ること
+        'f_test':f_test_f,
+        'indep_ttest.t':ind_ttest_t,
+        'dep_ttest.t':dep_ttest_t,
+        'welch.ttest':welch_ttest_t, #自由度vのt分布表を見ること
         'mw_utest.u':mannwhitney_utest(data1, data2),
         'w_rstest.tw':wilcoxon_rstest(data1, data2),
-        'w_srtest.tw':wilcoxon_srtest(data1, data2)[0]
+        'w_srtest.tw':wilcoxon_srtest_Tw
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -349,26 +378,98 @@ def describe2(data1, data2):
         'var.s':var_s(data2),
         'std.p':std_p(data2),
         'std.s':std_s(data2),
+        'std_e':std_e(data2),
         'min':min_value(data2),
         '25%':quartile1(data2),
         '50%':median(data2),
         '75%':quartile3(data2),
         'max':max_value(data2),
         '25-75%':quartile_range(data2),
-        'f_test':f_test(data1, data2)[1],
-        'welch.ttest':welch_ttest(data1, data2)[1],
-        'w_srtest.tw':wilcoxon_srtest(data1, data2)[1]
+        'f_test':f_test_df,
+        'indep_ttest.t':ind_ttest_df,
+        'dep_ttest.t':dep_ttest_df,
+        'welch.ttest':welch_ttest_v,
+        'w_srtest.tw':wilcoxon_srtest_df
     }, index=["data2"]).T
     
-    return display(pd.concat([df1, df2], axis=1))
+    # 結果出力
+    display(pd.concat([df1, df2], axis=1))
+    
+    # 種々のグラフをプロット
+    # ヒストグラム
+    fig, axes= plt.subplots(1,2)
+    axes[0].hist(data1)
+    axes[1].hist(data2)
+    plt.show()
+    
+    # 箱ひげ図
+    plt.boxplot([data1, data2], positions=[1, 2])
+    plt.title("Boxplot")
+    plt.show()
+    
+    # エラーバー
+    #plt.errorbar(data1, data2)
+    #plt.title("Error bar")
+    #plt.show()
+    
+    # バイオリンプロット
+    plt.violinplot([data1, data2], positions=[1.2, 1.8])
+    plt.title("Violinplot")
+    plt.show()
+    
+    # イベントプロット
+    plt.eventplot([data1, data2], orientation="vertical", lineoffsets=[2, 4], linewidth=0.75)
+    plt.title("Eventplot")
+    plt.show()
+    
+    # サンプルサイズが同じ場合のみ出力
+    try:
+        # グラフ
+        plt.plot(data1, data2)
+        plt.title("plot")
+        plt.xlabel("data1")
+        plt.ylabel("data2")
+        plt.show()
+
+        # 散布図
+        plt.scatter(data1, data2)
+        plt.title("Scatter")
+        plt.xlabel("data1")
+        plt.ylabel("data2")
+        plt.show()
+
+        # ステムプロット
+        plt.stem(data1, data2)
+        plt.title("Stem")
+        plt.xlabel("data1")
+        plt.ylabel("data2")
+        plt.show()
+
+        # ステッププロット
+        plt.step(data1, data2)
+        plt.title("Step")
+        plt.xlabel("data1")
+        plt.ylabel("data2")
+        plt.show()
+
+        # hist2d
+        plt.hist2d(data1, data2)
+        plt.title("Hist2d")
+        plt.xlabel("data1")
+        plt.ylabel("data2")
+        plt.show()
+
+    except:
+        pass
+    
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 # 確率分布からデータを生成
-data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(0, 1001, 100), columns=["data2"])["data2"]
+data1 = pd.DataFrame(np.random.randint(0, 11, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data2"])["data2"]
 describe2(data1, data2)
 
 # 既存のライブラリで検証
