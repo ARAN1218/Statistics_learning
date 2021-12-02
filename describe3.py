@@ -51,6 +51,10 @@ def describe3(data1, data2, data3):
     def std_s(data):
         return var_s(data)**0.5
     
+    # 標準誤差
+    def std_e(data):
+        return std_s(data) / length(data)**0.5
+    
     # ソート（クイックソート）
     def quick_sort(data):
         n = length(data)
@@ -105,7 +109,9 @@ def describe3(data1, data2, data3):
         return quartile3(data) - quartile1(data)
     
     # 母共分散
+    # サンプルサイズが異なる場合、Errorを返す
     def cov_p(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         m1 = mean(data1)
         m2 = mean(data2)
         cov_p = 0
@@ -114,7 +120,9 @@ def describe3(data1, data2, data3):
         return cov_p / length(data1)
     
     # 不偏共分散
+    # サンプルサイズが異なる場合、Errorを返す
     def cov_s(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         m1 = mean(data1)
         m2 = mean(data2)
         cov_s = 0
@@ -123,7 +131,9 @@ def describe3(data1, data2, data3):
         return cov_s / (length(data1)-1)
     
     # ピアソン相関係数
+    # サンプルサイズが異なる場合、Errorを返す
     def pearson_cor(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         return cov_s(data1, data2) / (std_s(data1)*std_s(data2))
     
     # ピアソン無相関検定(検定統計量)
@@ -131,9 +141,12 @@ def describe3(data1, data2, data3):
     # 帰無仮説：母集団のピアソン相関係数は0である(相関はない)
     # 対立仮説：母集団のピアソン相関係数は0以外である(相関がある)
     # 注：値がマイナスになるが、両側検定だから絶対値で考えてよい
+    # サンプルサイズが異なる場合、Errorを返す
     def pearson_cor_test(data1, data2):
         cor = pearson_cor(data1, data2)
-        if cor > 0:
+        if cor == 'Error':
+            return 'Error'
+        elif cor > 0:
             return (cor*((length(data1)-2)**0.5)) / ((1-(cor**2))**0.5)
         else:
             return (-cor*(length(data1)-2)**0.5) / ((1-cor**2)**0.5)
@@ -172,7 +185,9 @@ def describe3(data1, data2, data3):
         return ranked, rank_num_list
     
     # スピアマン順位相関係数........................ちょっとだけズレがある
+    # サンプルサイズが異なる場合、Errorを返す
     def spearman_cor(data1, data2):
+        if length(data1) != length(data2): return 'Error'
         n = length(data1)
         rank1, a = rank(data1)
         rank2, b = rank(data2)
@@ -185,8 +200,10 @@ def describe3(data1, data2, data3):
     # 自由度n-2のt分布に従う
     # 帰無仮説：母集団のスピアマン順位相関係数は0である(相関はない)
     # 対立仮説：母集団のスピアマン順位相関係数は0以外である(相関がある)
+    # サンプルサイズが異なる場合、Errorを返す
     def spearman_cor_test(data1, data2):
         spearman =  spearman_cor(data1, data2)
+        if spearman == 'Error': return 'Error'
         return spearman * ((length(data1)-1)/(1-spearman**2))**0.5
     
     # 一元配置分散分析(ANalysis Of VAriance)
@@ -194,21 +211,20 @@ def describe3(data1, data2, data3):
     def anova(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
-        m = (m1+m2+m3) / 3
+        m = mean(list(data1) + list(data2) + list(data3))
         
         sst = 0
-        for data in [data1, data2, data3]:
+        for data, mn in zip([data1, data2, data3], [m1, m2, m3]):
             for d in data:
-                sst += (d - m)**2
+                sst += (d - mn)**2
         ssw = ((m1-m)**2)*l1 + ((m2-m)**2)*l2 + ((m3-m)**2)*l3
-        ssb = sst - ssw
         
         dft = (l1+l2+l3) - 1
         dfw = 3 - 1
         dfb = dft - dfw
         
         msw = ssw / dfw
-        msb = ssb / dfb
+        msb = sst / dfb
         
         f = msw / msb
         
@@ -219,7 +235,13 @@ def describe3(data1, data2, data3):
     # ソース：https://www.spss-tutorials.com/repeated-measures-anova/
     # scipyライブラリに反復測定分散分析を計算するモジュールが無かったが、以下のURLのテストデータで答えが一致した
     # https://s-nako.work/ja/2020/01/paired-one-way-anova-and-multiple-comparisons-in-python/
+    # サンプルサイズが異なる場合、Errorを返す
     def rm_anova(data1, data2, data3):
+        n = length(data1)
+        n2 = length(data2)
+        n3 = length(data3)
+        if n!=n2 or n!=n3 or n2!=n3: return 'Error', 'Error', 'Error'
+        
         ss_within, count = 0, 0
         for d1, d2, d3 in zip(data1, data2, data3):
             m = mean([d1, d2, d3])
@@ -227,7 +249,6 @@ def describe3(data1, data2, data3):
             ss_within += (d2 - m)**2
             ss_within += (d3 - m)**2
             
-        n = length(data1)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
         m_grand = mean([m1, m2, m3])
         ss_model = 0
@@ -259,7 +280,7 @@ def describe3(data1, data2, data3):
         data3_dec = data_linked[data1_len+data2_len:]
         return data1_dec, data2_dec, data3_dec, dup
     
-    # クラスカル=ウォリス検定-----------------ちょっとズレてる
+    # クラスカル=ウォリス検定........................ちょっとだけズレがある
     def kruskalwallis_test(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         ls = l1 + l2 + l3
@@ -275,9 +296,9 @@ def describe3(data1, data2, data3):
         
         pre_h = (12 / (ls*(ls+1))) * rank_sum - (3*(ls+1))
         c = 1 - (dup_sum / (l*(l**2-1)))
-        h = pre_h / c
+        H = pre_h / c
         k = 3 - 1
-        return h, k
+        return H, k
     
     # インデックス毎のランク付け
     # フリードマン検定の為に実装
@@ -290,11 +311,15 @@ def describe3(data1, data2, data3):
             data3_ranked += [data_ranked[2]]
         return data1_ranked, data2_ranked, data3_ranked
     
-    # フリードマン検定
+    # フリードマン検定........................ちょっとだけズレがある
     # ソース：https://sixsigmastudyguide.com/friedman-non-parametric-hypothesis-test/
+    # サンプルサイズが異なる場合、Errorを返す
     def friedman_test(data1, data2, data3):
-        k = 3
         n = length(data1)
+        n2 = length(data2)
+        n3 = length(data3)
+        if n!=n2 or n!=n3 or n2!=n3: return 'Error', 'Error'
+        k = 3
         data1_ranked, data2_ranked, data3_ranked = rank_index(data1, data2, data3)
         print(data1_ranked)
         
@@ -319,6 +344,7 @@ def describe3(data1, data2, data3):
         'var.s':var_s(data1),
         'std.p':std_p(data1),
         'std.s':std_s(data1),
+        'std_e':std_e(data1),
         'min':min_value(data1),
         '25%':quartile1(data1),
         '50%':median(data1),
@@ -345,6 +371,7 @@ def describe3(data1, data2, data3):
         'var.s':var_s(data2),
         'std.p':std_p(data2),
         'std.s':std_s(data2),
+        'std_e':std_e(data2),
         'min':min_value(data2),
         '25%':quartile1(data2),
         '50%':median(data2),
@@ -371,6 +398,7 @@ def describe3(data1, data2, data3):
         'var.s':var_s(data3),
         'std.p':std_p(data3),
         'std.s':std_s(data3),
+        'std_e':std_e(data3),
         'min':min_value(data3),
         '25%':quartile1(data3),
         '50%':median(data3),
@@ -393,10 +421,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# 確率分布からデータを生成
-data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(0, 1001, 100), columns=["data2"])["data2"]
-data3 = pd.DataFrame(np.random.randint(0, 10001, 100), columns=["data3"])["data3"]
+# ランダム分布
+data1 = pd.DataFrame(np.random.randint(0,11,100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(0,101,100), columns=["data2"])["data2"]
+data3 = pd.DataFrame(np.random.randint(0,1001,100), columns=["data3"])["data3"]
 describe3(data1, data2, data3)
 
 # 既存ライブラリで検証
@@ -404,6 +432,5 @@ from scipy import stats as st
 print("PearsonrResult" + str(st.pearsonr(data1, data2)))
 print(st.spearmanr(data1, data2))
 print(st.f_oneway(data1, data2, data3))
-# 反復測定分散分析はscipyにないので割愛
 print(st.kruskal(data1, data2, data3))
 print(st.friedmanchisquare(data1, data2, data3))
