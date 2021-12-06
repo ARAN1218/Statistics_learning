@@ -130,7 +130,7 @@ def describe2(data1, data2):
             cov_s += (d1-m1) * (d2-m2)
         return cov_s / (length(data1)-1)
     
-    # ピアソン相関係数
+    # ピアソンの積率相関係数(Pearson product-moment correlation coefficient)
     # サンプルサイズが異なる場合、Errorを返す
     def pearson_cor(data1, data2):
         if length(data1) != length(data2): return 'Error'
@@ -185,7 +185,7 @@ def describe2(data1, data2):
                 rank_num_list += [rank_num]
         return ranked, rank_num_list
     
-    # スピアマン順位相関係数........................ちょっとだけズレがある
+    # スピアマンの順位相関係数(Spearman's rank correlation coefficient)........................ちょっとだけズレがある
     # サンプルサイズが異なる場合、Errorを返す
     def spearman_cor(data1, data2):
         n = length(data1)
@@ -207,6 +207,38 @@ def describe2(data1, data2):
         if spearman == 'Error': return 'Error'
         return spearman * ((length(data1)-1)/(1-spearman**2))**0.5
     
+    # ケンドールの順位相関係数(Kendall's rank correlation coefficient)
+    # サンプルサイズが異なる場合、Errorを返す
+    # ソース：https://manabitimes.jp/math/1286
+    # ソース2：https://bellcurve.jp/statistics/glossary/1307.html
+    def kendall_cor(data1, data2):
+        n1, n2 = length(data1), length(data2)
+        if n1 != n2: return 'Error'
+        
+        plus, minus, zero1, zero2 = 0, 0, 0, 0
+        for i in range(n1-1):
+            for j in range(i+1, n2):
+                d = (data1[i]-data1[j])*(data2[i]-data2[j])
+                if d == 0:
+                    if data1[i] == data1[j]: zero1 += 1
+                    else: zero2 += 1
+                elif d > 0: plus += 1
+                else: minus += 1
+        
+        N = (n1*(n1-1)) / 2
+        T = (plus - minus) / ((N-zero1)**0.5 * (N-zero2)**0.5)
+        p = T / ((2*(2*n1+5)) / (9*n1*(n1-1)))**0.5
+        return T
+    
+    # ケンドール無相関検定(検定統計量)
+    # サンプルサイズが異なる場合、Errorを返す
+    # ソース：https://oceanone.hatenablog.com/entry/2020/04/28/022222
+    def kendall_cor_test(data1, data2):
+        kendall = kendall_cor(data1, data2)
+        if kendall == 'Error': return 'Error'
+        n = length(data1)
+        return kendall / ((2*(2*n+5)) / (9*n*(n-1)))**0.5
+    
     # 等分散の検定(F比)
     # 帰無仮説：2群間の母分散に差がない(等分散である)
     # 対立仮説：2群間の母分散に差がある(等分散でない)
@@ -214,7 +246,17 @@ def describe2(data1, data2):
         s1, s2 = var_s(data1), var_s(data2)
         return (s1 / s2) if (s1 < s2) else (s2 / s1), "({}, {})".format(length(data1)-1, length(data2)-1)
     
-    # 対応なし2標本t検定
+    # 効果量1(Cohen's d)
+    # 対応なし2標本t検定において、それがどの程度の効果を持つのかという指標
+    # 目安...0.2:小、0.5:中、0.8:大
+    # ソースでは母分散を使用していたが、母集団を推定するという役割を考え、自分の関数は普遍分散を使用している
+    # ソース：https://bellcurve.jp/statistics/course/12765.html
+    def ind_cohen_d(data1, data2):
+        n1, n2 = length(data1), length(data2)
+        bool_s = ((n1*var_s(data1) + n2*var_s(data2)) / (n1 + n2))**0.5
+        return (mean(data1) - mean(data2)) / bool_s
+    
+    # 対応なし2標本t検定(Student t-test)
     # 自由度n1+n2-1のt分布に従う
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
@@ -225,7 +267,17 @@ def describe2(data1, data2):
         s = ((n1-1)*s1**2 + (n2-1)*s2**2) / (n1+n2-2)
         return (m1-m2) / (s * (1/n1 + 1/n2))**0.5, (n1+n2-1)
     
-    # 対応あり2標本t検定
+    # 効果量2(Cohen's d)
+    # 対応あり2標本t検定において、それがどの程度の効果を持つのかという指標
+    # 目安...0.2:小、0.5:中、0.8:大
+    # サンプルサイズが異なる場合、Errorを返す
+    # ソース：https://bookdown.org/sbtseiji/lswjamoviJ/ch-ttest.html#sec:cohensd
+    def dep_cohen_d(data1, data2):
+        if length(data1) != length(data2): return 'Error'
+        diff = data1 - data2
+        return mean(diff) / std_s(diff)
+    
+    # 対応あり2標本t検定(Paired Samples t-test)
     # 自由度n1-1のt分布に従う
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
@@ -241,7 +293,7 @@ def describe2(data1, data2):
     # ウェルチのt検定
     # 対応なし2標本t検定であるが、こちらは等分散を仮定できない際に使用する
     # 一説によれば、標本が等分散かどうかによらず利用しても問題ないらしい
-    # ウェルチ=サタスウェイト（Welch=Satterthwaite）の式により近似自由度のt分布に従う
+    # ウェルチ=サタスウェイト（Welch=Satterthwaite）の式により近似自由度vのt分布に従う
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
     def welch_ttest(data1, data2):
@@ -306,6 +358,8 @@ def describe2(data1, data2):
     
     # ウィルコクソンの符号順位検定
     # 対応のある2群間の中央値に差があるかを検定する
+    # 帰無仮説：2組の標本の中央値に差はない
+    # 対立仮説：2組の標本の中央値に差がある
     # サンプルサイズが異なる場合、Errorを返す
     def wilcoxon_srtest(data1, data2):
         if length(data1) != length(data2): return 'Error', 'Error'
@@ -333,7 +387,46 @@ def describe2(data1, data2):
                 r_sum += data_diff_ranked[p]
             return r_sum, (p_num+n_num)
         
-    
+    # 符号検定(Sign test)
+    # 対応のある2群間の中央値に差があるかを検定する(検定力は低め？)
+    # サンプルサイズが25以下の場合、二項定理から直接確率(p値)を計算する
+    # サンプルサイズが25より大きい場合、標準正規分布表からp値を読み取る
+    # 帰無仮説：2組の標本の中央値に差はない
+    # 対立仮説：2組の標本の中央値に差がある
+    # ソース：https://kusuri-jouhou.com/statistics/fugou.html
+    def sign_test(data1, data2):
+        n1, n2 = length(data1), length(data2)
+        if n1 != n2: return 'Error'
+        
+        sign_data = data1 - data2
+        plus, minus = 0, 0
+        for d in sign_data:
+            if d == 0: continue
+            elif d > 0: plus += 1
+            else: minus += 1
+        n = plus + minus
+        sign = plus if plus < minus else minus
+        c = 0.5 if sign < (n/2) else -0.5
+        
+        if n <= 25:
+            p = 1
+            for i in range(n): p *= 0.5
+            C = p
+            for r in range(1, sign+1):
+                nn, over, under = n, 1, 1
+                for j in range(1, r+1):
+                    over *= nn
+                    under *= j
+                    nn -= 1
+                C += (over / under) * p
+            return "({:.3f}, {})".format(C, 'p')
+        else:
+            m = n / 2
+            s = n**0.5 / 2
+            z = ((sign+c) - m) / s
+            return "({:.3f}, {})".format(z, 'z')
+
+
     f_test_f, f_test_df = f_test(data1, data2)
     ind_ttest_t, ind_ttest_df = independent_ttest(data1, data2)
     dep_ttest_t, dep_ttest_df = dependent_ttest(data1, data2)
@@ -357,17 +450,19 @@ def describe2(data1, data2):
         '25-75%':quartile_range(data1),
         'cov.p':cov_p(data1, data2),
         'cov.s':cov_s(data1, data2),
-        'pearson_cor':pearson_cor(data1, data2),
-        'pearson_cor_test':pearson_cor_test(data1, data2), #自由度n1-n2+2のt分布表を見ること
-        'spearman_cor':spearman_cor(data1, data2),
-        'spearman_cor_test':spearman_cor_test(data1, data2),
-        'f_test':f_test_f,
-        'indep_ttest.t':ind_ttest_t,
+        'Pearson_cor':pearson_cor(data1, data2),
+        'Spearman_cor':spearman_cor(data1, data2),
+        'Kendall_cor':kendall_cor(data1, data2),
+        'f_test.f':f_test_f,
+        'ind_ttest.t':ind_ttest_t,
+        'ind_cohen_d':ind_cohen_d(data1, data2),
         'dep_ttest.t':dep_ttest_t,
-        'welch.ttest':welch_ttest_t, #自由度vのt分布表を見ること
-        'mw_utest.u':mannwhitney_utest(data1, data2),
-        'w_rstest.tw':wilcoxon_rstest(data1, data2),
-        'w_srtest.tw':wilcoxon_srtest_Tw
+        'dep_cohen_d':dep_cohen_d(data1, data2),
+        'Welch_ttest.t':welch_ttest_t,
+        'MW_utest.u':mannwhitney_utest(data1, data2),
+        'W_rstest.tw':wilcoxon_rstest(data1, data2),
+        'W_srtest.tw':wilcoxon_srtest_Tw,
+        'sign_test':sign_test(data1, data2)
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -385,11 +480,14 @@ def describe2(data1, data2):
         '75%':quartile3(data2),
         'max':max_value(data2),
         '25-75%':quartile_range(data2),
-        'f_test':f_test_df,
-        'indep_ttest.t':ind_ttest_df,
+        'Pearson_cor':pearson_cor_test(data1, data2),
+        'Spearman_cor':spearman_cor_test(data1, data2),
+        'Kendall_cor':kendall_cor_test(data1, data2),
+        'f_test.f':f_test_df,
+        'ind_ttest.t':ind_ttest_df,
         'dep_ttest.t':dep_ttest_df,
-        'welch.ttest':welch_ttest_v,
-        'w_srtest.tw':wilcoxon_srtest_df
+        'Welch_ttest.t':welch_ttest_v,
+        'W_srtest.tw':wilcoxon_srtest_df
     }, index=["data2"]).T
     
     # 結果出力
@@ -468,8 +566,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 確率分布からデータを生成
-data1 = pd.DataFrame(np.random.randint(0, 11, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data2"])["data2"]
+data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
 describe2(data1, data2)
 
 # 既存のライブラリで検証
