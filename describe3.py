@@ -23,9 +23,39 @@ def describe3(data1, data2, data3):
             sum_value += d
         return sum_value
     
-    # 平均値
+    # 算術平均
     def mean(data):
         return sum_value(data) / length(data)
+    
+    # 幾何平均
+    # 比率や割合等について適用する
+    # フールプループとして、値が0のものは飛ばして計算する
+    def geometric_mean(data):
+        ds = 1
+        n = length(data)
+        for d in data:
+            ds *= d
+        return (ds)**(1/n)
+    
+    # 調和平均
+    # 時速の平均等に適用する
+    # フールプループとして、値が0のものは飛ばして計算する
+    def harmonic_mean(data):
+        ds = 0
+        n = length(data)
+        for d in data:
+            if d!=0:
+                ds += 1/d
+        return 1 / ((1/n) * ds)
+    
+    # 平均偏差
+    def meand(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d in data:
+            s += abs(d - m)
+        return s / n
     
     # 母分散
     def var_p(data):
@@ -105,9 +135,36 @@ def describe3(data1, data2, data3):
         q3 = length(data) * (3/4)
         return data_sorted[int(q3)]
     
-    # 四分位範囲
+    # 四分位偏差
     def quartile_range(data):
         return quartile3(data) - quartile1(data)
+    
+    # ミッドレンジ
+    def mid_range(data):
+        return (max_value(data) + min_value(data)) / 2
+    
+    # レンジ
+    def all_range(data):
+        return max_value(data) - min_value(data)
+    
+    # 変動係数(coefficient of variance)
+    # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
+    # 比率の比較なので、比例尺度のみ使用できる
+    # 標準偏差は母分散を用いて計算する(統計学入門のp38式より)
+    def cov(data):
+        return std_p(data) / mean(data)
+    
+    # ジニ係数(gini coefficient)
+    # 不平等度の指標として用いられる
+    # 面積を表すので普通は負の値を取らないが、定義通りに計算して出力する。
+    def gini(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d1 in data:
+            for d2 in data:
+                s += abs(d1 - d2)
+        return s / (2 * n**2 * m)
     
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
@@ -137,7 +194,7 @@ def describe3(data1, data2, data3):
         if length(data1) != length(data2): return 'Error'
         return cov_s(data1, data2) / (std_s(data1)*std_s(data2))
     
-    # ピアソン無相関検定(検定統計量)
+    # ピアソン無相関検定(検定統計量t)
     # 自由度n-2のt分布に従う
     # 帰無仮説：母集団のピアソン相関係数は0である(相関はない)
     # 対立仮説：母集団のピアソン相関係数は0以外である(相関がある)
@@ -206,7 +263,7 @@ def describe3(data1, data2, data3):
             spearman += (d1 - d2)**2
         return 1 - ((6*spearman) / (n*(n**2-1)))
     
-    # スピアマン無相関検定(検定統計量)
+    # スピアマン無相関検定(検定統計量t)
     # 自由度n-2のt分布に従う
     # 帰無仮説：母集団のスピアマン順位相関係数は0である(相関はない)
     # 対立仮説：母集団のスピアマン順位相関係数は0以外である(相関がある)
@@ -239,7 +296,8 @@ def describe3(data1, data2, data3):
         p = T / ((2*(2*n1+5)) / (9*n1*(n1-1)))**0.5
         return T
     
-    # ケンドール無相関検定(検定統計量)
+    # ケンドール無相関検定(検定統計量z)
+    # 検定統計量zの値から標準正規分布表を読み、p値を読み取る
     # サンプルサイズが異なる場合、Errorを返す
     # ソース：https://oceanone.hatenablog.com/entry/2020/04/28/022222
     def kendall_cor_test(data1, data2):
@@ -272,6 +330,7 @@ def describe3(data1, data2, data3):
     
     # バートレット検定(Bartlett test)
     # 母集団に正規性がある3群標本間の等分散性を検定する
+    # 自由度df=k-1のX2分布に従う
     # 帰無仮説：各群の分散は均一である
     # 対立仮説：各群の分散は均一でない
     # ソース：https://kusuri-jouhou.com/statistics/bartlett.html
@@ -298,6 +357,7 @@ def describe3(data1, data2, data3):
     
     # ルビーン検定(Levene's test)
     # 母集団に正規性がない3群標本間の等分散性を検定する
+    # 自由度df=(k-1, N-k)のF分布に従う
     # 帰無仮説：各群の分散は均一である
     # 対立仮説：各群の分散は均一でない
     # ソース：https://ja.wikipedia.org/wiki/ルビーン検定
@@ -442,6 +502,64 @@ def describe3(data1, data2, data3):
             
         x20 = (12 / (n*k*(k+1))) * r2 - 3*n*(k+1)
         return x20, k-1
+    
+    # テューキー・クレーマーの多重検定(Tukey-Kramer test).........................他の分析ライブラリ等で正確性が検査されていない
+    # 群数が多い場合はボンフェローニより有意差が出やすい
+    # 母集団の正規性と等分散性であることを要求される
+    # テューキーHSD法(Tukey’s honestly significant difference test)ではサンプルサイズが同数であることも要求される
+    # ソース①：https://mcn-www.jwu.ac.jp/~yokamoto/openwww/stat/multicomp/Tukey/readme.pdf
+    # ソース②：http://www.eonet.ne.jp/~vor-dem-gesetz/m_comparison.pdf
+    def tukey_kramer(data1, data2, data3):
+        l1, l2, l3 = length(data1), length(data2), length(data3)
+        l = l1 + l2 + l3
+        k = 3
+        m1, m2, m3 = mean(data1), mean(data2), mean(data3)
+        m = mean(list(data1) + list(data2) + list(data3))
+        
+        sst = 0
+        for data, mn in zip([data1, data2, data3], [m1, m2, m3]):
+            for d in data:
+                sst += (d - mn)**2
+        dfw = ((l1+l2+l3)-1) - (3-1)
+        MSe = sst / dfw #群内分散
+        
+        t1 = abs(m2-m3) / ((MSe/2) * ((1/l2) + (1/l3)))**0.5
+        t2 = abs(m1-m3) / ((MSe/2) * ((1/l1) + (1/l3)))**0.5
+        t3 = abs(m1-m2) / ((MSe/2) * ((1/l1) + (1/l2)))**0.5
+        return "({:.3f}, ({}, {}))".format(t1, k, (l-k)), "({:.3f}, ({}, {}))".format(t2, k, (l-k)), "({:.3f}, ({}, {}))".format(t3, k, (l-k))
+    
+    # 全データ同一ランク付け
+    # スティール・ドゥワスの多重比較のために作成
+    def rank_all_sd(data1, data2):
+        data_linked = list(data1) + list(data2)
+        data_linked, dup = rank(data_linked)
+        data1_len = length(data1)
+        data1_dec = data_linked[:data1_len]
+        data2_dec = data_linked[data1_len:]
+        return [i**2 for i in data1_dec], [i**2 for i in data2_dec], data1_dec
+    
+    # スティール・ドゥワスの多重比較(Steel-Dwass test)
+    # テューキー・クレーマー法のノンパラ版
+    # ウィルコクソンの順位和検定が基礎となっている
+    # (群数k, ∞)のt分布表の値を√2で割った値が棄却限界値？(ソース参照)
+    # ソース：https://imnstir.blogspot.com/2012/06/steel-dwassexcel.html
+    def steel_dwass(data1, data2, data3):
+        l1, l2, l3 = length(data1), length(data2), length(data3)
+        n = l1 + l2 + l3
+        k = 3
+        E, V = [], []
+        for first, second in [((data1,l1), (data2,l2)), ((data1,l1), (data3,l3)), ((data2,l2), (data3,l3))]:
+            N = first[1] + second[1]
+            E += [(first[1]*(N+1)) / 2]
+            
+            f, s, f2 = rank_all_sd(first[0], second[0])
+            f, s, f2 = sum_value(f), sum_value(s), sum_value(f2)
+            V += [(((first[1]*second[1])/(N*(N-1))) * ((f+s) - ((N*(N+1)**2)/4)), f2)]
+            
+        sd1 = "({:.3f}, {:.3f})".format(abs(V[0][1]-E[0])/(V[0][0])**0.5, 3.31/(2)**0.5)
+        sd2 = "({:.3f}, {:.3f})".format(abs(V[1][1]-E[1])/(V[1][0])**0.5, 3.31/(2)**0.5)
+        sd3 = "({:.3f}, {:.3f})".format(abs(V[2][1]-E[2])/(V[2][0])**0.5, 3.31/(2)**0.5)
+        return sd1, sd2, sd3
 
     
     bl_x2, bl_df = bartlett_test(data1, data2, data3)
@@ -450,6 +568,8 @@ def describe3(data1, data2, data3):
     rm_anova_f, rm_anova_df_model, rm_anova_df_error = rm_anova(data1, data2, data3)
     kw_h, kw_k = kruskalwallis_test(data1, data2, data3)
     fm_x20, fm_k = friedman_test(data1, data2, data3)
+    tk1, tk2, tk3 = tukey_kramer(data1, data2, data3)
+    sd1, sd2, sd3 = steel_dwass(data1, data2, data3)
     #print(st.kstest(data1, st.norm(loc=mean(data1), scale=std_s(data1)).cdf))
     
     
@@ -457,6 +577,9 @@ def describe3(data1, data2, data3):
         'count':length(data1),
         'sum':sum_value(data1),
         'mean':mean(data1),
+        'g_mean':geometric_mean(data1),
+        'h_mean':harmonic_mean(data1),
+        'meand':meand(data1),
         'var.p':var_p(data1),
         'var.s':var_s(data1),
         'std.p':std_p(data1),
@@ -468,28 +591,37 @@ def describe3(data1, data2, data3):
         '75%':quartile3(data1),
         'max':max_value(data1),
         '25-75%':quartile_range(data1),
+        'mid-range':mid_range(data1),
+        'range':all_range(data1),
+        'cov':cov(data1),
+        'gini':gini(data1),
         'cov.p':cov_p(data2, data3),
         'cov.s':cov_s(data2, data3),
         'Pearson_cor':pearson_cor(data2, data3),
-        'Pearson_cor_test':pearson_cor_test(data2, data3),
+        'Pearson_cor_test.t':pearson_cor_test(data2, data3),
         'partial_cor':partial_cor(data2, data3, data1),
         'Spearman_cor':spearman_cor(data2, data3),
-        'Spearman_cor_test':spearman_cor_test(data2, data3),
+        'Spearman_cor_test.t':spearman_cor_test(data2, data3),
         'Kendall_cor':kendall_cor(data2, data3),
-        'Kendall_cor_test':kendall_cor_test(data2, data3),
+        'Kendall_cor_test.z':kendall_cor_test(data2, data3),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data1),
-        "Bartlett's test":bl_x2,
-        "Levene's test":le_w,
-        'ANOVA':anova_f,
-        'RM_ANOVA':rm_anova_f,
-        'Kruskal-Wallis test':kw_h,
-        "Friedman's test":fm_x20
+        "Bartlett_test.f":bl_x2,
+        "Levene_test.f":le_w,
+        'ANOVA.f':anova_f,
+        'RM_ANOVA.f':rm_anova_f,
+        'Kruskal-Wallis_test.h':kw_h,
+        "Friedman_test.x2":fm_x20,
+        "Tukey-kramer_test.q":tk1,
+        "Steel-dwass_test.t":sd1
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
         'count':length(data2),
         'sum':sum_value(data2),
         'mean':mean(data2),
+        'g_mean':geometric_mean(data2),
+        'h_mean':harmonic_mean(data2),
+        'meand':meand(data2),
         'var.p':var_p(data2),
         'var.s':var_s(data2),
         'std.p':std_p(data2),
@@ -501,28 +633,37 @@ def describe3(data1, data2, data3):
         '75%':quartile3(data2),
         'max':max_value(data2),
         '25-75%':quartile_range(data2),
+        'mid-range':mid_range(data2),
+        'range':all_range(data2),
+        'cov':cov(data2),
+        'gini':gini(data2),
         'cov.p':cov_p(data1, data3),
         'cov.s':cov_s(data1, data3),
         'Pearson_cor':pearson_cor(data1, data3),
-        'Pearson_cor_test':pearson_cor_test(data1, data3),
+        'Pearson_cor_test.t':pearson_cor_test(data1, data3),
         'partial_cor':partial_cor(data1, data3, data2),
         'Spearman_cor':spearman_cor(data1, data3),
-        'Spearman_cor_test':spearman_cor_test(data1, data3),
+        'Spearman_cor_test.t':spearman_cor_test(data1, data3),
         'Kendall_cor':kendall_cor(data1, data3),
-        'Kendall_cor_test':kendall_cor_test(data1, data3),
+        'Kendall_cor_test.z':kendall_cor_test(data1, data3),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data2),
-        "Bartlett's test":bl_df,
-        "Levene's test":le_df,
-        'ANOVA':anova_dfw,
-        'RM_ANOVA':rm_anova_df_model,
-        'Kruskal-Wallis test':kw_k,
-        "Friedman's test":fm_k
+        "Bartlett_test.f":bl_df,
+        "Levene_test.f":le_df,
+        'ANOVA.f':anova_dfw,
+        'RM_ANOVA.f':rm_anova_df_model,
+        'Kruskal-Wallis_test.h':kw_k,
+        "Friedman_test.x2":fm_k,
+        "Tukey-kramer_test.q":tk2,
+        "Steel-dwass_test.t":sd2
     }, index=["data2"]).T
     
     df3 = pd.DataFrame({
         'count':length(data3),
         'sum':sum_value(data3),
         'mean':mean(data3),
+        'g_mean':geometric_mean(data3),
+        'h_mean':harmonic_mean(data3),
+        'meand':meand(data3),
         'var.p':var_p(data3),
         'var.s':var_s(data3),
         'std.p':std_p(data3),
@@ -534,18 +675,24 @@ def describe3(data1, data2, data3):
         '75%':quartile3(data3),
         'max':max_value(data3),
         '25-75%':quartile_range(data3),
+        'mid-range':mid_range(data3),
+        'range':all_range(data3),
+        'cov':cov(data3),
+        'gini':gini(data3),
         'cov.p':cov_p(data1, data2),
         'cov.s':cov_s(data1, data2),
         'Pearson_cor':pearson_cor(data1, data2),
-        'Pearson_cor_test':pearson_cor_test(data1, data2),
+        'Pearson_cor_test.t':pearson_cor_test(data1, data2),
         'partial_cor':partial_cor(data1, data2, data3),
         'Spearman_cor':spearman_cor(data1, data2),
-        'Spearman_cor_test':spearman_cor_test(data1, data2),
+        'Spearman_cor_test.t':spearman_cor_test(data1, data2),
         'Kendall_cor':kendall_cor(data1, data2),
-        'Kendall_cor_test':kendall_cor_test(data1, data2),
+        'Kendall_cor_test.z':kendall_cor_test(data1, data2),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data3),
-        'ANOVA':anova_dfb,
-        'RM_ANOVA':rm_anova_df_error
+        'ANOVA.f':anova_dfb,
+        'RM_ANOVA.f':rm_anova_df_error,
+        "Tukey-kramer_test.q":tk3,
+        "Steel-dwass_test.t":sd3
     }, index=["data3"]).T
     
     return display(pd.concat([df1, df2, df3], axis=1))
