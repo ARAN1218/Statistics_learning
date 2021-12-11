@@ -14,7 +14,10 @@
 ### 一行describe関数
 - サンプルサイズ(count)
 - 合計値(sum)
-- 平均値(mean)
+- 算術平均(mean)
+- 幾何平均(g_mean)
+- 調和平均(h_mean)
+- 平均偏差(meang)
 - 母分散(var.p)
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
@@ -24,7 +27,9 @@
 - 中央値(50%)
 - 第三四分位数(75%)
 - 最大値(max)
-- 四分位範囲(25-75%)
+- 四分位偏差(25-75%)
+- ミッドレンジ(mid-range)
+- レンジ(range)
 
 #### グラフ
 - 線グラフ
@@ -40,7 +45,10 @@
 #### それぞれ求めるもの
 - サンプルサイズ(count)
 - 合計値(sum)
-- 平均値(mean)
+- 算術平均(mean)
+- 幾何平均(g_mean)
+- 調和平均(h_mean)
+- 平均偏差(meang)
 - 母分散(var.p)
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
@@ -50,27 +58,26 @@
 - 中央値(50%)
 - 第三四分位数(75%)
 - 最大値(max)
-- 四分位範囲(25-75%)
+- 四分位偏差(25-75%)
+- ミッドレンジ(mid-range)
+- レンジ(range)
 
 #### 2つのデータから求めるもの
 - 母共分散(cov.p)
 - 不偏共分散(cov.s)
-- ピアソン相関係数(pearson_cor)
-- ピアソン無相関検定(検定統計量t)(pearson_cor_test)
-- スピアマン相関係数(spearman_cor)
-- スピアマン無相関検定(検定統計量t)(spearman_cor_test)
-- ケンドール相関係数(kendall_cor)
-- ケンドール無相関検定(検定統計量z)(kendall_cor_test)
-- F検定(検定統計量F)(f_test)
-- 対応なし2標本t検定(検定統計量t)(indep_ttest.t)
-- 効果量1(対応なしt検定ver)(Cohen_d)
+- ピアソン相関係数&ピアソン無相関検定(検定統計量t)(Pearson_cor.t)
+- スピアマン相関係数&スピアマン無相関検定(検定統計量t)(Spearman_cor.t)
+- ケンドール相関係数&ケンドール無相関検定(検定統計量z)(Kendall_cor.z)
+- F検定(検定統計量F)(f_test.f)
+- 対応なし2標本t検定(検定統計量t)(ind_ttest.t)
+- 効果量(対応なしt検定ver)(ind_cohen_d)
 - 対応あり2標本t検定(検定統計量t)(dep_ttest.t)
-- 効果量2(対応ありt検定ver)(Cohen_d)
-- ウェルチのt検定(検定統計量t)(welch.ttest)
-- マン=ホイットニーのU検定(検定統計量U)(mw_utest.u)
-- ウィルコクソンの順位和検定(検定統計量Tw)(w_rstest.tw)
-- ウィルコクソンの符号順位検定(検定統計量Tw)(w_srtest.tw)
-- 符号検定(検定統計量m)(sign_test)
+- 効果量(対応ありt検定ver)(dep_cohen_d)
+- ウェルチのt検定(検定統計量t)(Welch.ttest.t)
+- マン=ホイットニーのU検定(検定統計量U)(Mann-whitney_utest.u)
+- ウィルコクソンの順位和検定(検定統計量Tw)(Wilcoxon_rstest.tw)
+- ウィルコクソンの符号順位検定(検定統計量Tw)(Wilcoxon_srtest.tw)
+- 符号検定(検定統計量m)(sign_test.z)
 
 #### グラフ(一標本)
 - ヒストグラム
@@ -90,7 +97,10 @@
 #### それぞれ求めるもの
 - サンプルサイズ(count)
 - 合計値(sum)
-- 平均値(mean)
+- 算術平均(mean)
+- 幾何平均(g_mean)
+- 調和平均(h_mean)
+- 平均偏差(meang)
 - 母分散(var.p)
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
@@ -100,33 +110,36 @@
 - 中央値(50%)
 - 第三四分位数(75%)
 - 最大値(max)
-- 四分位範囲(25-75%)
+- 四分位偏差(25-75%)
+- ミッドレンジ(mid-range)
+- レンジ(range)
 
 #### 2つのデータから求めるもの
 - 母共分散(cov.p)
 - 不偏共分散(cov.s)
-- ピアソン相関係数(pearson_cor)
-- ピアソン無相関検定(検定統計量t)(pearson_cor_test)
-- スピアマン相関係数(spearman_cor)
-- スピアマン無相関検定(検定統計量t)spearman_cor_test)
-- ケンドール相関係数(kendall_cor)
-- ケンドール無相関検定(検定統計量z)(kendall_cor_test)
+- ピアソン相関係数(Pearson_cor)
+- ピアソン無相関検定(検定統計量t)(Pearson_cor_test.t)
+- スピアマン相関係数(Spearman_cor)
+- スピアマン無相関検定(検定統計量t)(Spearman_cor_test.t)
+- ケンドール相関係数(Kendall_cor)
+- ケンドール無相関検定(検定統計量z)(Kendall_cor_test.z)
 
 #### 3つのデータから求めるもの
 - 偏相関係数(partial_cor)
-- バートレット検定(検定統計量x2)(bartlett_test)
-- ルビーン検定(検定統計量F)(levene_test)
-- 一元配置分散分析(検定統計量F)(anova)
-- 反復測定分散分析(検定統計量F)(fm_test)
-- クラスカル=ウォリス検定(検定統計量H)(kw_test)
-- フリードマン検定(検定統計量x20)(fm_test)
+- バートレット検定(検定統計量x2)(Bartlett_test.f)
+- ルビーン検定(検定統計量F)(Levene_test.f)
+- 一元配置分散分析(検定統計量F)(ANOVA.f)
+- 反復測定分散分析(検定統計量F)(RM_ANOVA.f)
+- クラスカル=ウォリス検定(検定統計量H)(Kruskal-Wallis_test.h)
+- フリードマン検定(検定統計量x20)(Friedman_test.x2)
+- テューキー・クレーマー検定(検定統計量q)(Tukey-kramer_test.q)
+- スティール・ドゥワス検定(検定統計量t)(Steel-dwass_test.t)
 
 Coming soon...
 
 
 ## 今後の展望
 - 検定統計量の出力とセットで自由度も出力するように改善したい。
-- 全てのdescribe関数における出力の表示を、見やすいように統一したい。
 - 現在出力内容として組み込んでいるものの、計算式の間違い等の原因による出力ミスが起きている統計量を修正したい。
 - 現在出力している統計量の他に何か計算できる統計量を調査し、それを新たに出力するプログラムを追加したい。
 - ヒストグラムや散布図等、統計的なグラフを出力するプログラムも追加したい。
