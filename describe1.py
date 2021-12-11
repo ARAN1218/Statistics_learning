@@ -22,9 +22,39 @@ def describe1(data):
             sum_value += d
         return sum_value
     
-    # 平均値
+    # 算術平均
     def mean(data):
         return sum_value(data) / length(data)
+    
+    # 幾何平均
+    # 比率や割合等について適用する
+    # フールプループとして、値が0のものは飛ばして計算する
+    def geometric_mean(data):
+        ds = 1
+        n = length(data)
+        for d in data:
+            ds *= d
+        return (ds)**(1/n)
+    
+    # 調和平均
+    # 時速の平均等に適用する
+    # フールプループとして、値が0のものは飛ばして計算する
+    def harmonic_mean(data):
+        ds = 0
+        n = length(data)
+        for d in data:
+            if d!=0:
+                ds += 1/d
+        return 1 / ((1/n) * ds)
+    
+    # 平均偏差
+    def meand(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d in data:
+            s += abs(d - m)
+        return s / n
     
     # 母分散
     def var_p(data):
@@ -104,9 +134,36 @@ def describe1(data):
         q3 = length(data) * (3/4)
         return data_sorted[int(q3)]
     
-    # 四分位範囲
+    # 四分位偏差
     def quartile_range(data):
         return quartile3(data) - quartile1(data)
+    
+    # ミッドレンジ
+    def mid_range(data):
+        return (max_value(data) + min_value(data)) / 2
+    
+    # レンジ
+    def all_range(data):
+        return max_value(data) - min_value(data)
+    
+    # 変動係数(coefficient of variance)
+    # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
+    # 比率の比較なので、比例尺度のみ使用できる
+    # 標準偏差は母分散を用いて計算する(統計学入門のp38式より)
+    def cov(data):
+        return std_p(data) / mean(data)
+    
+    # ジニ係数(gini coefficient)
+    # 不平等度の指標として用いられる
+    # 面積を表すので普通は負の値を取らないが、定義通りに計算して出力する。
+    def gini(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d1 in data:
+            for d2 in data:
+                s += abs(d1 - d2)
+        return s / (2 * n**2 * m)
     
     
     # 結果出力
@@ -114,6 +171,9 @@ def describe1(data):
         'count':length(data),
         'sum':sum_value(data),
         'mean':mean(data),
+        'g_mean':geometric_mean(data),
+        'h_mean':harmonic_mean(data),
+        'meand':meand(data),
         'var.p':var_p(data),
         'var.s':var_s(data),
         'std.p':std_p(data),
@@ -124,7 +184,11 @@ def describe1(data):
         '50%':median(data),
         '75%':quartile3(data),
         'max':max_value(data),
-        '25-75%':quartile_range(data)
+        '25-75%':quartile_range(data),
+        'mid-range':mid_range(data),
+        'range':all_range(data),
+        'cov':cov(data),
+        'gini':gini(data)
     }, index=["descriptive statistics"]).T)
     
     # 種々のグラフをプロット
@@ -183,5 +247,5 @@ def describe1(data):
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-data = pd.DataFrame(np.random.normal(50, (250)**0.5, 1000), columns=["data"])["data"]
+data = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data"])["data"]
 describe1(data)
