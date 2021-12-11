@@ -22,9 +22,38 @@ def describe2(data1, data2):
             sum_value += d
         return sum_value
     
-    # 平均値
+    # 算術平均
     def mean(data):
         return sum_value(data) / length(data)
+    
+    # 幾何平均
+    # 比率や割合等について適用する
+    def geometric_mean(data):
+        ds = 1
+        n = length(data)
+        for d in data:
+            ds *= d
+        return (ds)**(1/n)
+    
+    # 調和平均
+    # 時速の平均等に適用する
+    # フールプループとして、値が0のものは飛ばして計算する
+    def harmonic_mean(data):
+        ds = 0
+        n = length(data)
+        for d in data:
+            if d!=0:
+                ds += 1/d
+        return 1 / ((1/n) * ds)
+    
+    # 平均偏差
+    def meand(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d in data:
+            s += abs(d - m)
+        return s / n
     
     # 母分散
     def var_p(data):
@@ -104,9 +133,36 @@ def describe2(data1, data2):
         q3 = length(data) * (3/4)
         return data_sorted[int(q3)]
     
-    # 四分位範囲
+    # 四分位偏差
     def quartile_range(data):
         return quartile3(data) - quartile1(data)
+    
+    # ミッドレンジ
+    def mid_range(data):
+        return (max_value(data) + min_value(data)) / 2
+    
+    # レンジ
+    def all_range(data):
+        return max_value(data) - min_value(data)
+    
+    # 変動係数(coefficient of variance)
+    # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
+    # 比率の比較なので、比例尺度のみ使用できる
+    # 標準偏差は母分散を用いて計算する(統計学入門のp38式より)
+    def cov(data):
+        return std_p(data) / mean(data)
+    
+    # ジニ係数(gini coefficient)
+    # 不平等度の指標として用いられる
+    # 面積を表すので普通は負の値を取らないが、定義通りに計算して出力する。
+    def gini(data):
+        n = length(data)
+        m = mean(data)
+        s = 0
+        for d1 in data:
+            for d2 in data:
+                s += abs(d1 - d2)
+        return s / (2 * n**2 * m)
     
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
@@ -239,6 +295,25 @@ def describe2(data1, data2):
         n = length(data1)
         return kendall / ((2*(2*n+5)) / (9*n*(n-1)))**0.5
     
+    # 単回帰(simple regression)
+    # data1を独立変数、data2を従属変数として、最小二乗法を用いて直線への当てはめを行う
+    # y = bx + aとした時、bを回帰係数、aをy切片と呼び、これらを求める
+    # また、独立変数が従属変数を決定する度合いとして決定係数も計算する(ピアソンの積率相関係数の二乗)
+    # サンプルサイズが異なる場合、Errorを返す
+    def simple_regression(data1, data2):
+        nx, ny = length(data1), length(data2)
+        if nx!=ny: return 'Error', 'Error'
+        mx, my = mean(data1), mean(data2)
+        sx2 = sum_value(data1**2)
+        sxy = 0
+        for x, y in zip(data1, data2):
+            sxy += x * y
+            
+        b = (sxy - nx*mx*my) / (sx2 - nx*mx**2)
+        a = my - b*mx
+        r2 = pearson_cor(data1, data2)**2
+        return "({:.3f}, {:.3f})".format(b, a), r2
+
     # 等分散の検定(F比)
     # 帰無仮説：2群間の母分散に差がない(等分散である)
     # 対立仮説：2群間の母分散に差がある(等分散でない)
@@ -290,7 +365,7 @@ def describe2(data1, data2):
         s = var_s(diff)
         return m / (s/n)**0.5, (n-1)
     
-    # ウェルチのt検定
+    # ウェルチのt検定(Welch t-test)
     # 対応なし2標本t検定であるが、こちらは等分散を仮定できない際に使用する
     # 一説によれば、標本が等分散かどうかによらず利用しても問題ないらしい
     # ウェルチ=サタスウェイト（Welch=Satterthwaite）の式により近似自由度vのt分布に従う
@@ -313,7 +388,7 @@ def describe2(data1, data2):
         data2_dec = data_linked[data1_len:]
         return data1_dec, data2_dec
     
-    # マン=ホイットニーのU検定
+    # マン=ホイットニーのU検定(Mann-Whitney u-test)
     # 対応のない2群間の中央値に差があるかを検定する
     # サンプルサイズが小さい時(n<=20)、検定統計量UはMann-Whitney検定表に基づいてp値を算出する
     # サンプルサイズが十分に大きい時(n>20)、検定統計量zは標準正規分布に従うかどうかを考え、正規分布表に基づいてp値を算出する
@@ -336,7 +411,7 @@ def describe2(data1, data2):
             z = (U - ((n1*n2)/2)) / (((n1*n2*(n1+n2+1)) / 12)**0.5)
             return z
         
-    # ウィルコクソンの順位和検定
+    # ウィルコクソンの順位和検定(Wilcoxon rank sum test)
     # 対応のない2群間の中央値に差があるかを検定する
     # ウィルコクソンの順位和検定の数表を参照して有意差があるかどうか判定する
     # マン=ホイットニーのU検定と実質的に同じ計算をしているため、同じ結果が返ってくるはずである
@@ -356,7 +431,7 @@ def describe2(data1, data2):
         vw = (n1*n2*(n1+n2+1)) / 12
         return (ew-w) / (vw)**0.5
     
-    # ウィルコクソンの符号順位検定
+    # ウィルコクソンの符号順位検定(Wilcoxon signed rank test)
     # 対応のある2群間の中央値に差があるかを検定する
     # 帰無仮説：2組の標本の中央値に差はない
     # 対立仮説：2組の標本の中央値に差がある
@@ -427,6 +502,7 @@ def describe2(data1, data2):
             return "({:.3f}, {})".format(z, 'z')
 
 
+    sr_ba, sr_r2 = simple_regression(data1, data2)
     f_test_f, f_test_df = f_test(data1, data2)
     ind_ttest_t, ind_ttest_df = independent_ttest(data1, data2)
     dep_ttest_t, dep_ttest_df = dependent_ttest(data1, data2)
@@ -437,6 +513,9 @@ def describe2(data1, data2):
         'count':length(data1),
         'sum':sum_value(data1),
         'mean':mean(data1),
+        'g_mean':geometric_mean(data1),
+        'h_mean':harmonic_mean(data1),
+        'meand':meand(data1),
         'var.p':var_p(data1),
         'var.s':var_s(data1),
         'std.p':std_p(data1),
@@ -448,27 +527,35 @@ def describe2(data1, data2):
         '75%':quartile3(data1),
         'max':max_value(data1),
         '25-75%':quartile_range(data1),
+        'mid-range':mid_range(data1),
+        'range':all_range(data1),
+        'cov':cov(data1),
+        'gini':gini(data1),
         'cov.p':cov_p(data1, data2),
         'cov.s':cov_s(data1, data2),
-        'Pearson_cor':pearson_cor(data1, data2),
-        'Spearman_cor':spearman_cor(data1, data2),
-        'Kendall_cor':kendall_cor(data1, data2),
+        'Pearson_cor.t':pearson_cor(data1, data2),
+        'Spearman_cor.t':spearman_cor(data1, data2),
+        'Kendall_cor.z':kendall_cor(data1, data2),
+        'simple_regression':sr_ba,
         'f_test.f':f_test_f,
         'ind_ttest.t':ind_ttest_t,
         'ind_cohen_d':ind_cohen_d(data1, data2),
         'dep_ttest.t':dep_ttest_t,
         'dep_cohen_d':dep_cohen_d(data1, data2),
         'Welch_ttest.t':welch_ttest_t,
-        'MW_utest.u':mannwhitney_utest(data1, data2),
-        'W_rstest.tw':wilcoxon_rstest(data1, data2),
-        'W_srtest.tw':wilcoxon_srtest_Tw,
-        'sign_test':sign_test(data1, data2)
+        'Mann-Whitney_utest.u':mannwhitney_utest(data1, data2),
+        'Wilcoxon_rstest.tw':wilcoxon_rstest(data1, data2),
+        'Wilcoxon_srtest.tw':wilcoxon_srtest_Tw,
+        'sign_test.z':sign_test(data1, data2)
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
         'count':length(data2),
         'sum':sum_value(data2),
         'mean':mean(data2),
+        'g_mean':geometric_mean(data2),
+        'h_mean':harmonic_mean(data2),
+        'meand':meand(data2),
         'var.p':var_p(data2),
         'var.s':var_s(data2),
         'std.p':std_p(data2),
@@ -480,14 +567,19 @@ def describe2(data1, data2):
         '75%':quartile3(data2),
         'max':max_value(data2),
         '25-75%':quartile_range(data2),
-        'Pearson_cor':pearson_cor_test(data1, data2),
-        'Spearman_cor':spearman_cor_test(data1, data2),
-        'Kendall_cor':kendall_cor_test(data1, data2),
+        'mid-range':mid_range(data2),
+        'range':all_range(data2),
+        'cov':cov(data2),
+        'gini':gini(data2),
+        'Pearson_cor.t':pearson_cor_test(data1, data2),
+        'Spearman_cor.t':spearman_cor_test(data1, data2),
+        'Kendall_cor.z':kendall_cor_test(data1, data2),
+        'simple_regression':sr_r2,
         'f_test.f':f_test_df,
         'ind_ttest.t':ind_ttest_df,
         'dep_ttest.t':dep_ttest_df,
         'Welch_ttest.t':welch_ttest_v,
-        'W_srtest.tw':wilcoxon_srtest_df
+        'Wilcoxon_srtest.tw':wilcoxon_srtest_df
     }, index=["data2"]).T
     
     # 結果出力
