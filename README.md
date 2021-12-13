@@ -145,3 +145,13 @@ Coming soon...
 - ヒストグラムや散布図等、統計的なグラフを出力するプログラムも追加したい。
 - 上記の出力内容の説明にて、その統計量の意味を正確にまとめていきたい。
 - 三行describe関数を四行以上の引数にて正常に動作するプログラムに改善したい。(もしくは別の関数として定義するのもアリ)
+
+
+## 参考文献
+- 統計学入門　東京大学教養学部統計学教室　東京大学出版会(1991)
+- 統計学図鑑　栗原伸一ほか　オーム社(2017)
+- 44の例題で学ぶ 統計的検定と推定の解き方　上田拓治　オーム社(2009)
+
+![Unknown](https://user-images.githubusercontent.com/67265109/145838872-156f49a7-75ee-486e-8bf3-565803fe22ec.jpeg)
+![Unknown-1](https://user-images.githubusercontent.com/67265109/145839013-6cbf6a0b-33de-40d7-ac06-719985cd3be9.jpeg)
+![Unknown-2](https://user-images.githubusercontent.com/67265109/145839027-9d735397-942c-44dd-8b5d-f7fdb5dd33e9.jpeg)
