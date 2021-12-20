@@ -166,6 +166,34 @@ def describe3(data1, data2, data3):
                 s += abs(d1 - d2)
         return s / (2 * n**2 * m)
     
+    # 歪度(skewness)
+    # 母集団の分布の非対称性の程度・方向性を示す推定統計量
+    # 値が正なら右の裾が長く、負なら左の裾が長い分布となっている
+    def skewness(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        three = 0
+        for d in data:
+            three += ((d-m) / s)**3
+        
+        return (n/((n-1)*(n-2))) * three
+    
+    # 尖度(kurtosis)
+    # 母集団の分布の中心周囲部分の尖り具合を表す推定統計量
+    # 値が正なら正規分布より尖っており、負なら正規分布より丸く鈍い形をしている
+    def kurtosis(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        four = 0
+        for d in data:
+            four += (d-m)**4 / s**4
+        
+        return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
+    
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
     def cov_p(data1, data2):
@@ -379,7 +407,7 @@ def describe3(data1, data2, data3):
         W = ((N-k) / (k-1)) * ((n1*(zm1-zm)**2 + n2*(zm2-zm)**2 + n3*(zm3-zm)**2) / (sz1 + sz2 + sz3))
         return W, "({},{})".format(k-1, N-k)
     
-    # 一元配置分散分析(ANalysis Of VAriance)
+    # 一元配置分散分析(One-way ANalysis Of VAriance)
     # 自由度(dfw, dfb)のF分布に従う
     def anova(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
@@ -403,7 +431,7 @@ def describe3(data1, data2, data3):
         
         return f, dfw, dfb
     
-    # 反復測定分散分析(Repeated Measures ANOVA)
+    # 一元配置反復測定分散分析(One-way Repeated Measures ANOVA)
     # 自由度(df_model, df_error)のF分布に従う
     # ソース：https://www.spss-tutorials.com/repeated-measures-anova/
     # scipyライブラリに反復測定分散分析を計算するモジュールが無かったが、以下のURLのテストデータで答えが一致した
@@ -453,7 +481,9 @@ def describe3(data1, data2, data3):
         data3_dec = data_linked[data1_len+data2_len:]
         return data1_dec, data2_dec, data3_dec, dup
     
-    # クラスカル=ウォリス検定(Kruskal-Wallis test)........................ちょっとだけズレがある
+    # クラスカル=ウォリス検定(Kruskal-Wallis test)
+    # 同順位がある時の補正がかかっているため、少しだけ高めに検定統計量が計算される
+    # ソース：統計学図鑑
     def kruskalwallis_test(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         ls = l1 + l2 + l3
@@ -484,7 +514,8 @@ def describe3(data1, data2, data3):
             data3_ranked += [data_ranked[2]]
         return data1_ranked, data2_ranked, data3_ranked
     
-    # フリードマン検定........................ちょっとだけズレがある
+    # フリードマン検定
+    # ソフトウェアの計算では、同順位があった際に検定統計量を少しだけ大きくする調整をしているらしい
     # ソース：https://sixsigmastudyguide.com/friedman-non-parametric-hypothesis-test/
     # サンプルサイズが異なる場合、Errorを返す
     def friedman_test(data1, data2, data3):
@@ -506,9 +537,9 @@ def describe3(data1, data2, data3):
     # テューキー・クレーマーの多重検定(Tukey-Kramer test).........................他の分析ライブラリ等で正確性が検査されていない
     # 群数が多い場合はボンフェローニより有意差が出やすい
     # 母集団の正規性と等分散性であることを要求される
+    # 検定統計量はq分布に従い、読み取った値を√2で割った値と比較して高ければ帰無仮説を棄却する。
     # テューキーHSD法(Tukey’s honestly significant difference test)ではサンプルサイズが同数であることも要求される
-    # ソース①：https://mcn-www.jwu.ac.jp/~yokamoto/openwww/stat/multicomp/Tukey/readme.pdf
-    # ソース②：http://www.eonet.ne.jp/~vor-dem-gesetz/m_comparison.pdf
+    # ソース①：統計学図鑑
     def tukey_kramer(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         l = l1 + l2 + l3
@@ -520,12 +551,12 @@ def describe3(data1, data2, data3):
         for data, mn in zip([data1, data2, data3], [m1, m2, m3]):
             for d in data:
                 sst += (d - mn)**2
-        dfw = ((l1+l2+l3)-1) - (3-1)
+        dfw = (l1+l2+l3) - 3
         MSe = sst / dfw #群内分散
         
-        t1 = abs(m2-m3) / ((MSe/2) * ((1/l2) + (1/l3)))**0.5
-        t2 = abs(m1-m3) / ((MSe/2) * ((1/l1) + (1/l3)))**0.5
-        t3 = abs(m1-m2) / ((MSe/2) * ((1/l1) + (1/l2)))**0.5
+        t1 = abs(m2-m3) / (MSe * ((1/l2) + (1/l3)))**0.5
+        t2 = abs(m1-m3) / (MSe * ((1/l1) + (1/l3)))**0.5
+        t3 = abs(m1-m2) / (MSe * ((1/l1) + (1/l2)))**0.5
         return "({:.3f}, ({}, {}))".format(t1, k, (l-k)), "({:.3f}, ({}, {}))".format(t2, k, (l-k)), "({:.3f}, ({}, {}))".format(t3, k, (l-k))
     
     # 全データ同一ランク付け
@@ -595,6 +626,8 @@ def describe3(data1, data2, data3):
         'range':all_range(data1),
         'cov':cov(data1),
         'gini':gini(data1),
+        'skewness':skewness(data1),
+        'kurtosis':kurtosis(data1),
         'cov.p':cov_p(data2, data3),
         'cov.s':cov_s(data2, data3),
         'Pearson_cor':pearson_cor(data2, data3),
@@ -637,6 +670,8 @@ def describe3(data1, data2, data3):
         'range':all_range(data2),
         'cov':cov(data2),
         'gini':gini(data2),
+        'skewness':skewness(data2),
+        'kurtosis':kurtosis(data2),
         'cov.p':cov_p(data1, data3),
         'cov.s':cov_s(data1, data3),
         'Pearson_cor':pearson_cor(data1, data3),
@@ -679,6 +714,8 @@ def describe3(data1, data2, data3):
         'range':all_range(data3),
         'cov':cov(data3),
         'gini':gini(data3),
+        'skewness':skewness(data3),
+        'kurtosis':kurtosis(data3),
         'cov.p':cov_p(data1, data2),
         'cov.s':cov_s(data1, data2),
         'Pearson_cor':pearson_cor(data1, data2),
