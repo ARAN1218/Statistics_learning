@@ -165,6 +165,34 @@ def describe1(data):
                 s += abs(d1 - d2)
         return s / (2 * n**2 * m)
     
+    # 歪度(skewness)
+    # 母集団の分布の非対称性の程度・方向性を示す推定統計量
+    # 値が正なら右の裾が長く、負なら左の裾が長い分布となっている
+    def skewness(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        three = 0
+        for d in data:
+            three += ((d-m) / s)**3
+        
+        return (n/((n-1)*(n-2))) * three
+    
+    # 尖度(kurtosis)
+    # 母集団の分布の中心周囲部分の尖り具合を表す推定統計量
+    # 値が正なら正規分布より尖っており、負なら正規分布より丸く鈍い形をしている
+    def kurtosis(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        four = 0
+        for d in data:
+            four += (d-m)**4 / s**4
+        
+        return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
+    
     
     # 結果出力
     display(pd.DataFrame({
@@ -188,7 +216,9 @@ def describe1(data):
         'mid-range':mid_range(data),
         'range':all_range(data),
         'cov':cov(data),
-        'gini':gini(data)
+        'gini':gini(data),
+        'skewness':skewness(data),
+        'kurtosis':kurtosis(data)
     }, index=["descriptive statistics"]).T)
     
     # 種々のグラフをプロット
@@ -247,5 +277,5 @@ def describe1(data):
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-data = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data"])["data"]
+data = pd.DataFrame([8,5,2,9,5,3,7,5], columns=["data"])["data"]
 describe1(data)
