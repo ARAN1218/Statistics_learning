@@ -164,6 +164,34 @@ def describe2(data1, data2):
                 s += abs(d1 - d2)
         return s / (2 * n**2 * m)
     
+    # 歪度(skewness)
+    # 母集団の分布の非対称性の程度・方向性を示す推定統計量
+    # 値が正なら右の裾が長く、負なら左の裾が長い分布となっている
+    def skewness(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        three = 0
+        for d in data:
+            three += ((d-m) / s)**3
+        
+        return (n/((n-1)*(n-2))) * three
+    
+    # 尖度(kurtosis)
+    # 母集団の分布の中心周囲部分の尖り具合を表す推定統計量
+    # 値が正なら正規分布より尖っており、負なら正規分布より丸く鈍い形をしている
+    def kurtosis(data):
+        n = length(data)
+        m = mean(data)
+        s = std_s(data)
+        
+        four = 0
+        for d in data:
+            four += (d-m)**4 / s**4
+        
+        return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
+    
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
     def cov_p(data1, data2):
@@ -332,15 +360,30 @@ def describe2(data1, data2):
         return (mean(data1) - mean(data2)) / bool_s
     
     # 対応なし2標本t検定(Student t-test)
-    # 自由度n1+n2-1のt分布に従う
+    # サンプルサイズの合計が100未満の時、検定統計量Tは自由度n1+n2-1のt分布に従う
+    # サンプルサイズの合計が100以上の時、検定統計量zは標準正規分布表を参照して
     # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
     # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
     def independent_ttest(data1, data2):
         n1, n2 = length(data1), length(data2)
         m1, m2 = mean(data1), mean(data2)
         s1, s2 = std_s(data1), std_s(data2)
+        
         s = ((n1-1)*s1**2 + (n2-1)*s2**2) / (n1+n2-2)
         return (m1-m2) / (s * (1/n1 + 1/n2))**0.5, (n1+n2-1)
+        
+    # z検定(対応なし)
+    # 2標本の母平均値に差があるかを検定する
+    # 母分散が既知、またはサンプルサイズの合計が100以上の時、検定統計量zは標準正規分布表を参照して検定する
+    # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
+    # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
+    def independent_ztest(data1, data2):
+        n1, n2 = length(data1), length(data2)
+        m1, m2 = mean(data1), mean(data2)
+        s1, s2 = std_p(data1), std_p(data2)
+        
+        z = (m1-m2) / ((s1/n1) + (s2/n2))**0.5
+        return z
     
     # 効果量2(Cohen's d)
     # 対応あり2標本t検定において、それがどの程度の効果を持つのかという指標
@@ -364,6 +407,22 @@ def describe2(data1, data2):
         m = mean(diff)
         s = var_s(diff)
         return m / (s/n)**0.5, (n-1)
+    
+    # z検定(対応あり)
+    # 2標本の母平均値に差があるかを検定する
+    # 母分散が既知、またはサンプルサイズの合計が100以上の時、検定統計量zは標準正規分布表を参照して検定する
+    # 帰無仮説：2群間の母平均値に差がない(母平均値が等しい)
+    # 対立仮説：2群間の母平均値に差がある(母平均値が異なる)
+    # サンプルサイズが異なる場合、Errorを返す
+    def dependent_ztest(data1, data2):
+        if length(data1) != length(data2): return 'Error'
+        diff = data1 - data2
+        n = length(diff)
+        m = mean(diff)
+        s = var_p(diff)
+        
+        d = sum_value(diff) / n
+        return d / (s/n)**0.5
     
     # ウェルチのt検定(Welch t-test)
     # 対応なし2標本t検定であるが、こちらは等分散を仮定できない際に使用する
@@ -392,10 +451,11 @@ def describe2(data1, data2):
     # 対応のない2群間の中央値に差があるかを検定する
     # サンプルサイズが小さい時(n<=20)、検定統計量UはMann-Whitney検定表に基づいてp値を算出する
     # サンプルサイズが十分に大きい時(n>20)、検定統計量zは標準正規分布に従うかどうかを考え、正規分布表に基づいてp値を算出する
+    # 注意：通常とは違い、検定統計量 < Mann-Whitney検定表の棄却域の時に帰無仮説を棄却する
     # 両側検定なので、検定統計量が負の値でも絶対値を取って考えれば良い
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
-    def mannwhitney_utest(data1, data2): # 標準正規分布に従うかどうかを考え、その有意性は正規分布表で確認できる
+    def mannwhitney_utest(data1, data2):
         n1, n2 = length(data1), length(data2)
         r1, r2 = rank_all(data1, data2)
         r1, r2 = sum_value(r1), sum_value(r2)
@@ -414,6 +474,7 @@ def describe2(data1, data2):
     # ウィルコクソンの順位和検定(Wilcoxon rank sum test)
     # 対応のない2群間の中央値に差があるかを検定する
     # ウィルコクソンの順位和検定の数表を参照して有意差があるかどうか判定する
+    # 数表から読み取ったa/bという表示は、検定統計量がa以下またはb以上の時に帰無仮説を棄却できるという意味である
     # マン=ホイットニーのU検定と実質的に同じ計算をしているため、同じ結果が返ってくるはずである
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
@@ -431,39 +492,8 @@ def describe2(data1, data2):
         vw = (n1*n2*(n1+n2+1)) / 12
         return (ew-w) / (vw)**0.5
     
-    # ウィルコクソンの符号順位検定(Wilcoxon signed rank test)
-    # 対応のある2群間の中央値に差があるかを検定する
-    # 帰無仮説：2組の標本の中央値に差はない
-    # 対立仮説：2組の標本の中央値に差がある
-    # サンプルサイズが異なる場合、Errorを返す
-    def wilcoxon_srtest(data1, data2):
-        if length(data1) != length(data2): return 'Error', 'Error'
-        data_diff = data1 - data2
-        count_p, count_n, delite = [], [], 0
-        for i in range(length(data1)):
-            if data_diff[i] > 0:
-                count_p += [i]
-            elif data_diff[i] < 0:
-                count_n += [i]
-                data_diff[i] = -data_diff[i]
-            else: #差が0の場合は取り除く
-                data_diff[i] = -999999
-                delite += 1
-        data_diff_ranked, dup = rank(data_diff, delite=delite)
-        
-        p_num, n_num = length(count_p), length(count_n)
-        r_sum = 0
-        if p_num >= n_num:
-            for n in count_n:
-                r_sum += data_diff_ranked[n]
-            return r_sum, (p_num+n_num) #順位が付けられたデータの組の数がNである
-        else:
-            for p in count_p:
-                r_sum += data_diff_ranked[p]
-            return r_sum, (p_num+n_num)
-        
     # 符号検定(Sign test)
-    # 対応のある2群間の中央値に差があるかを検定する(検定力は低め？)
+    # 対応のある2群間の中央値に差があるかを検定する(質的データである名義・順位尺度にも使える)
     # サンプルサイズが25以下の場合、二項定理から直接確率(p値)を計算する
     # サンプルサイズが25より大きい場合、標準正規分布表からp値を読み取る
     # 帰無仮説：2組の標本の中央値に差はない
@@ -501,6 +531,37 @@ def describe2(data1, data2):
             z = ((sign+c) - m) / s
             return "({:.3f}, {})".format(z, 'z')
 
+    # ウィルコクソンの符号順位検定(Wilcoxon signed rank test)
+    # 対応のある2群間の中央値に差があるかを検定する(量的データにのみ使用可能)
+    # 帰無仮説：2組の標本の中央値に差はない
+    # 対立仮説：2組の標本の中央値に差がある
+    # サンプルサイズが異なる場合、Errorを返す
+    def wilcoxon_srtest(data1, data2):
+        if length(data1) != length(data2): return 'Error', 'Error'
+        data_diff = data1 - data2
+        count_p, count_n, delite = [], [], 0
+        for i in range(length(data1)):
+            if data_diff[i] > 0:
+                count_p += [i]
+            elif data_diff[i] < 0:
+                count_n += [i]
+                data_diff[i] = -data_diff[i]
+            else: #差が0の場合は取り除く
+                data_diff[i] = -999999
+                delite += 1
+        data_diff_ranked, dup = rank(data_diff, delite=delite)
+        
+        p_num, n_num = length(count_p), length(count_n)
+        r_sum = 0
+        if p_num >= n_num:
+            for n in count_n:
+                r_sum += data_diff_ranked[n]
+            return r_sum, (p_num+n_num) #順位が付けられたデータの組の数がNである
+        else:
+            for p in count_p:
+                r_sum += data_diff_ranked[p]
+            return r_sum, (p_num+n_num)
+
 
     sr_ba, sr_r2 = simple_regression(data1, data2)
     f_test_f, f_test_df = f_test(data1, data2)
@@ -531,6 +592,8 @@ def describe2(data1, data2):
         'range':all_range(data1),
         'cov':cov(data1),
         'gini':gini(data1),
+        'skewness':skewness(data1),
+        'kurtosis':kurtosis(data1),
         'cov.p':cov_p(data1, data2),
         'cov.s':cov_s(data1, data2),
         'Pearson_cor.t':pearson_cor(data1, data2),
@@ -538,15 +601,17 @@ def describe2(data1, data2):
         'Kendall_cor.z':kendall_cor(data1, data2),
         'simple_regression':sr_ba,
         'f_test.f':f_test_f,
+        'ind_ztest.z':independent_ztest(data1, data2),
         'ind_ttest.t':ind_ttest_t,
         'ind_cohen_d':ind_cohen_d(data1, data2),
+        'dep_ztest.z':dependent_ztest(data1, data2),
         'dep_ttest.t':dep_ttest_t,
         'dep_cohen_d':dep_cohen_d(data1, data2),
         'Welch_ttest.t':welch_ttest_t,
         'Mann-Whitney_utest.u':mannwhitney_utest(data1, data2),
         'Wilcoxon_rstest.tw':wilcoxon_rstest(data1, data2),
-        'Wilcoxon_srtest.tw':wilcoxon_srtest_Tw,
-        'sign_test.z':sign_test(data1, data2)
+        'sign_test.z':sign_test(data1, data2),
+        'Wilcoxon_srtest.tw':wilcoxon_srtest_Tw
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -571,6 +636,8 @@ def describe2(data1, data2):
         'range':all_range(data2),
         'cov':cov(data2),
         'gini':gini(data2),
+        'skewness':skewness(data2),
+        'kurtosis':kurtosis(data2),
         'Pearson_cor.t':pearson_cor_test(data1, data2),
         'Spearman_cor.t':spearman_cor_test(data1, data2),
         'Kendall_cor.z':kendall_cor_test(data1, data2),
@@ -658,8 +725,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 確率分布からデータを生成
-data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
+data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data2"])["data2"]
 describe2(data1, data2)
 
 # 既存のライブラリで検証
