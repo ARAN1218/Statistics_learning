@@ -29,22 +29,25 @@ def describe3(data1, data2, data3):
     
     # 幾何平均
     # 比率や割合等について適用する
-    # フールプループとして、値が0のものは飛ばして計算する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
         ds = 1
         n = length(data)
         for d in data:
+            if d <= 0: return 'Error'
             ds *= d
         return (ds)**(1/n)
     
     # 調和平均
     # 時速の平均等に適用する
-    # フールプループとして、値が0のものは飛ばして計算する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
         ds = 0
         n = length(data)
         for d in data:
-            if d!=0:
+            if d <= 0:
+                return 'Error'
+            else:
                 ds += 1/d
         return 1 / ((1/n) * ds)
     
@@ -85,6 +88,13 @@ def describe3(data1, data2, data3):
     # 標準誤差
     def std_e(data):
         return std_s(data) / length(data)**0.5
+    
+    # 母平均の95%信頼区間(母分散既知)
+    def mean_95cl_known(data):
+        n = length(data)
+        m = mean(data)
+        s = std_p(data)
+        return "({:.2f}, {:.2f})".format(m-1.96*(s/n)**0.5, m+1.96*(s/n)**0.5)
     
     # ソート（クイックソート）
     def quick_sort(data):
@@ -147,6 +157,30 @@ def describe3(data1, data2, data3):
     def all_range(data):
         return max_value(data) - min_value(data)
     
+    # 最頻値
+    def mode(data):
+        # 個数を数える
+        data_sorted = quick_sort(data)
+        discoverd = {}
+        for d in data_sorted:
+            if d not in discoverd.keys():
+                discoverd[d] = 1
+            else:
+                discoverd[d] += 1
+        
+        # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
+        discoverd_sorted = sorted(discoverd.items(), key=lambda x:x[1], reverse=True)
+        mode = [discoverd_sorted[0][0]]
+        for i in range(length(discoverd_sorted)-1):
+            if discoverd_sorted[0][1] == discoverd_sorted[i+1][1]:
+                mode += [discoverd_sorted[i+1][0]]
+        
+        mode_str = "("
+        for m in mode:
+            mode_str += str(m) + ", "
+        mode_str += ")"
+        return mode_str
+    
     # 変動係数(coefficient of variance)
     # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
     # 比率の比較なので、比例尺度のみ使用できる
@@ -193,6 +227,29 @@ def describe3(data1, data2, data3):
             four += (d-m)**4 / s**4
         
         return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
+    
+    # ジャック-ベラ検定(Jarque–Bera test)
+    # 標本が正規分布に従っているかどうかを検定する
+    # 帰無仮説：標本が正規分布に従う
+    # 対立仮説：標本が正規分布に従わない
+    # ソース：https://ja.wikipedia.org/wiki/ジャック–ベラ検定
+    def jarque_bera(data):
+        n = length(data)
+        m = mean(data)
+        
+        s2, s3, s4 = 0, 0, 0
+        for d in data:
+            s2 += (d - m)**2
+            s3 += (d - m)**3
+            s4 += (d - m)**4
+            
+        # 標本歪度
+        S = (s3/n) / (s2/n)**(3/2)
+        # 標本尖度
+        K = (s4/n) / (s2/n)**2
+        
+        JB = (n/6) * (S**2 + (1/4)*(K-3)**2)
+        return JB
     
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
@@ -245,6 +302,18 @@ def describe3(data1, data2, data3):
         r12, r13, r23 = pearson_cor(data1, data2), pearson_cor(data1, data3), pearson_cor(data2, data3)
         if r12=='Error' or r13=='Error' or r23=='Error': return 'Error'
         return (r12 - r13*r23) / ((1-r13**2)**0.5 * (1-r23**2)**0.5)
+    
+    # 偏相関係数の無相関検定(検定統計量t)
+    # 母偏相関係数が0であるかどうかを検定する
+    # 帰無仮説：母偏相関係数が0である
+    # 対立仮説：母偏相関係数が0ではない
+    # サンプルサイズが異なる場合、Errorを返す
+    def partial_cor_test(data1, data2, data3):
+        p_cor = partial_cor(data1, data2, data3)
+        if p_cor == 'Error': return 'Error'
+        
+        n = length(data1)
+        return (abs(p_cor)*(n-3-2)**0.5) / (1-(p_cor)**2)**0.5
         
     # リストのコピー生成
     def copy(data):
@@ -393,6 +462,30 @@ def describe3(data1, data2, data3):
     def levene_test(data1, data2, data3):
         n1, n2, n3 = length(data1), length(data2), length(data3)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
+        N = n1 + n2 + n3
+        k = 3
+        z1, z2, z3 = make_abs(data1-m1), make_abs(data2-m2), make_abs(data3-m3)
+        zm1, zm2, zm3 = mean(z1), mean(z2), mean(z3)
+        zm = mean(list(z1) + list(z2) + list(z3))
+        
+        sz1, sz2, sz3 = 0, 0, 0
+        for z in z1: sz1 += (z - zm1)**2
+        for z in z2: sz2 += (z - zm2)**2
+        for z in z3: sz3 += (z - zm3)**2
+        
+        W = ((N-k) / (k-1)) * ((n1*(zm1-zm)**2 + n2*(zm2-zm)**2 + n3*(zm3-zm)**2) / (sz1 + sz2 + sz3))
+        return W, "({},{})".format(k-1, N-k)
+    
+    # ブラウン・フォーサイス検定(Brown-Forsythe test)
+    # 母集団に正規性がない3群標本間の等分散性を検定する
+    # ルビーン検定とは違いzの計算に中央値を用いるため、より非正規性に対してロバストである
+    # 自由度df=(k-1, N-k)のF分布に従う
+    # 帰無仮説：各群の分散は均一である
+    # 対立仮説：各群の分散は均一でない
+    # ソース：https://en.wikipedia.org/wiki/Brown–Forsythe_test
+    def brown_forsythe(data1, data2, data3):
+        n1, n2, n3 = length(data1), length(data2), length(data3)
+        m1, m2, m3 = median(data1), median(data2), median(data3)
         N = n1 + n2 + n3
         k = 3
         z1, z2, z3 = make_abs(data1-m1), make_abs(data2-m2), make_abs(data3-m3)
@@ -595,6 +688,7 @@ def describe3(data1, data2, data3):
     
     bl_x2, bl_df = bartlett_test(data1, data2, data3)
     le_w, le_df = levene_test(data1, data2, data3)
+    bf_w, bf_df = brown_forsythe(data1, data2, data3)
     anova_f, anova_dfw, anova_dfb = anova(data1, data2, data3)
     rm_anova_f, rm_anova_df_model, rm_anova_df_error = rm_anova(data1, data2, data3)
     kw_h, kw_k = kruskalwallis_test(data1, data2, data3)
@@ -616,6 +710,7 @@ def describe3(data1, data2, data3):
         'std.p':std_p(data1),
         'std.s':std_s(data1),
         'std_e':std_e(data1),
+        'mean_95cl_known':mean_95cl_known(data1),
         'min':min_value(data1),
         '25%':quartile1(data1),
         '50%':median(data1),
@@ -624,6 +719,7 @@ def describe3(data1, data2, data3):
         '25-75%':quartile_range(data1),
         'mid-range':mid_range(data1),
         'range':all_range(data1),
+        'mode':mode(data1),
         'cov':cov(data1),
         'gini':gini(data1),
         'skewness':skewness(data1),
@@ -633,17 +729,20 @@ def describe3(data1, data2, data3):
         'Pearson_cor':pearson_cor(data2, data3),
         'Pearson_cor_test.t':pearson_cor_test(data2, data3),
         'partial_cor':partial_cor(data2, data3, data1),
+        'partial_cor_test.t':partial_cor_test(data2, data3, data1),
         'Spearman_cor':spearman_cor(data2, data3),
         'Spearman_cor_test.t':spearman_cor_test(data2, data3),
         'Kendall_cor':kendall_cor(data2, data3),
         'Kendall_cor_test.z':kendall_cor_test(data2, data3),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data1),
-        "Bartlett_test.f":bl_x2,
-        "Levene_test.f":le_w,
-        'ANOVA.f':anova_f,
-        'RM_ANOVA.f':rm_anova_f,
-        'Kruskal-Wallis_test.h':kw_h,
-        "Friedman_test.x2":fm_x20,
+        'Jarque-Bara_test.x2':jarque_bera(data1),
+        "Bartlett_test.x2":bl_x2,
+        "Levene_test.F":le_w,
+        "Brown-Forsythe_test.F":bf_w,
+        'ANOVA.F':anova_f,
+        'RM_ANOVA.F':rm_anova_f,
+        'Kruskal-Wallis_test.H':kw_h,
+        "Friedman_test.Q":fm_x20,
         "Tukey-kramer_test.q":tk1,
         "Steel-dwass_test.t":sd1
     }, index=["data1"]).T
@@ -660,6 +759,7 @@ def describe3(data1, data2, data3):
         'std.p':std_p(data2),
         'std.s':std_s(data2),
         'std_e':std_e(data2),
+        'mean_95cl_known':mean_95cl_known(data2),
         'min':min_value(data2),
         '25%':quartile1(data2),
         '50%':median(data2),
@@ -668,6 +768,7 @@ def describe3(data1, data2, data3):
         '25-75%':quartile_range(data2),
         'mid-range':mid_range(data2),
         'range':all_range(data2),
+        'mode':mode(data2),
         'cov':cov(data2),
         'gini':gini(data2),
         'skewness':skewness(data2),
@@ -677,17 +778,20 @@ def describe3(data1, data2, data3):
         'Pearson_cor':pearson_cor(data1, data3),
         'Pearson_cor_test.t':pearson_cor_test(data1, data3),
         'partial_cor':partial_cor(data1, data3, data2),
+        'partial_cor_test.t':partial_cor_test(data1, data3, data2),
         'Spearman_cor':spearman_cor(data1, data3),
         'Spearman_cor_test.t':spearman_cor_test(data1, data3),
         'Kendall_cor':kendall_cor(data1, data3),
         'Kendall_cor_test.z':kendall_cor_test(data1, data3),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data2),
-        "Bartlett_test.f":bl_df,
-        "Levene_test.f":le_df,
-        'ANOVA.f':anova_dfw,
-        'RM_ANOVA.f':rm_anova_df_model,
-        'Kruskal-Wallis_test.h':kw_k,
-        "Friedman_test.x2":fm_k,
+        'Jarque-Bara_test.x2':jarque_bera(data2),
+        "Bartlett_test.x2":bl_df,
+        "Levene_test.F":le_df,
+        "Brown-Forsythe_test.F":bf_df,
+        'ANOVA.F':anova_dfw,
+        'RM_ANOVA.F':rm_anova_df_model,
+        'Kruskal-Wallis_test.H':kw_k,
+        "Friedman_test.Q":fm_k,
         "Tukey-kramer_test.q":tk2,
         "Steel-dwass_test.t":sd2
     }, index=["data2"]).T
@@ -704,6 +808,7 @@ def describe3(data1, data2, data3):
         'std.p':std_p(data3),
         'std.s':std_s(data3),
         'std_e':std_e(data3),
+        'mean_95cl_known':mean_95cl_known(data3),
         'min':min_value(data3),
         '25%':quartile1(data3),
         '50%':median(data3),
@@ -712,6 +817,7 @@ def describe3(data1, data2, data3):
         '25-75%':quartile_range(data3),
         'mid-range':mid_range(data3),
         'range':all_range(data3),
+        'mode':mode(data3),
         'cov':cov(data3),
         'gini':gini(data3),
         'skewness':skewness(data3),
@@ -721,18 +827,46 @@ def describe3(data1, data2, data3):
         'Pearson_cor':pearson_cor(data1, data2),
         'Pearson_cor_test.t':pearson_cor_test(data1, data2),
         'partial_cor':partial_cor(data1, data2, data3),
+        'partial_cor_test.t':partial_cor_test(data1, data2, data3),
         'Spearman_cor':spearman_cor(data1, data2),
         'Spearman_cor_test.t':spearman_cor_test(data1, data2),
         'Kendall_cor':kendall_cor(data1, data2),
         'Kendall_cor_test.z':kendall_cor_test(data1, data2),
         #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data3),
-        'ANOVA.f':anova_dfb,
-        'RM_ANOVA.f':rm_anova_df_error,
+        'Jarque-Bara_test.x2':jarque_bera(data3),
+        'ANOVA.F':anova_dfb,
+        'RM_ANOVA.F':rm_anova_df_error,
         "Tukey-kramer_test.q":tk3,
         "Steel-dwass_test.t":sd3
     }, index=["data3"]).T
     
-    return display(pd.concat([df1, df2, df3], axis=1))
+    # 結果出力
+    display(pd.concat([df1, df2, df3], axis=1))
+    
+    # 種々のグラフをプロット
+    # ヒストグラム
+    fig, axes= plt.subplots(1,3)
+    axes[0].hist(data1)
+    axes[1].hist(data2)
+    axes[2].hist(data3)
+    plt.show()
+    
+    # 箱ひげ図
+    plt.boxplot([data1, data2, data3], positions=[1, 2, 3])
+    plt.title("Boxplot")
+    plt.show()
+    
+    # バイオリンプロット
+    plt.violinplot([data1, data2, data3], positions=[1.2, 1.8, 2.4])
+    plt.title("Violinplot")
+    plt.show()
+    
+    # イベントプロット
+    plt.eventplot([data1, data2, data3], orientation="vertical", lineoffsets=[2, 4, 6], linewidth=0.75)
+    plt.title("Eventplot")
+    plt.show()
+    
+    
 
 import numpy as np
 import pandas as pd
