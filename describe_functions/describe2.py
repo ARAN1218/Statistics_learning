@@ -28,21 +28,25 @@ def describe2(data1, data2):
     
     # 幾何平均
     # 比率や割合等について適用する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
         ds = 1
         n = length(data)
         for d in data:
+            if d <= 0: return 'Error'
             ds *= d
         return (ds)**(1/n)
     
     # 調和平均
     # 時速の平均等に適用する
-    # フールプループとして、値が0のものは飛ばして計算する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
         ds = 0
         n = length(data)
         for d in data:
-            if d!=0:
+            if d <= 0:
+                return 'Error'
+            else:
                 ds += 1/d
         return 1 / ((1/n) * ds)
     
@@ -83,6 +87,13 @@ def describe2(data1, data2):
     # 標準誤差
     def std_e(data):
         return std_s(data) / length(data)**0.5
+    
+    # 母平均の95%信頼区間(母分散既知)
+    def mean_95cl_known(data):
+        n = length(data)
+        m = mean(data)
+        s = std_p(data)
+        return "({:.2f}, {:.2f})".format(m-1.96*(s/n)**0.5, m+1.96*(s/n)**0.5)
     
     # ソート（クイックソート）
     def quick_sort(data):
@@ -145,6 +156,30 @@ def describe2(data1, data2):
     def all_range(data):
         return max_value(data) - min_value(data)
     
+    # 最頻値
+    def mode(data):
+        # 個数を数える
+        data_sorted = quick_sort(data)
+        discoverd = {}
+        for d in data_sorted:
+            if d not in discoverd.keys():
+                discoverd[d] = 1
+            else:
+                discoverd[d] += 1
+        
+        # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
+        discoverd_sorted = sorted(discoverd.items(), key=lambda x:x[1], reverse=True)
+        mode = [discoverd_sorted[0][0]]
+        for i in range(length(discoverd_sorted)-1):
+            if discoverd_sorted[0][1] == discoverd_sorted[i+1][1]:
+                mode += [discoverd_sorted[i+1][0]]
+        
+        mode_str = "("
+        for m in mode:
+            mode_str += str(m) + ", "
+        mode_str += ")"
+        return mode_str
+    
     # 変動係数(coefficient of variance)
     # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
     # 比率の比較なので、比例尺度のみ使用できる
@@ -192,6 +227,29 @@ def describe2(data1, data2):
         
         return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
     
+    # ジャック-ベラ検定(Jarque–Bera test)
+    # 標本が正規分布に従っているかどうかを検定する
+    # 帰無仮説：標本が正規分布に従う
+    # 対立仮説：標本が正規分布に従わない
+    # ソース：https://ja.wikipedia.org/wiki/ジャック–ベラ検定
+    def jarque_bera(data):
+        n = length(data)
+        m = mean(data)
+        
+        s2, s3, s4 = 0, 0, 0
+        for d in data:
+            s2 += (d - m)**2
+            s3 += (d - m)**3
+            s4 += (d - m)**4
+            
+        # 標本歪度
+        S = (s3/n) / (s2/n)**(3/2)
+        # 標本尖度
+        K = (s4/n) / (s2/n)**2
+        
+        JB = (n/6) * (S**2 + (1/4)*(K-3)**2)
+        return JB
+    
     # 母共分散
     # サンプルサイズが異なる場合、Errorを返す
     def cov_p(data1, data2):
@@ -220,8 +278,8 @@ def describe2(data1, data2):
         if length(data1) != length(data2): return 'Error'
         return cov_s(data1, data2) / (std_s(data1)*std_s(data2))
     
-    # ピアソン無相関検定(検定統計量)
-    # 自由度n-2のt分布に従う
+    # ピアソン無相関検定(検定統計量t)
+    # 検定統計量は自由度n-2のt分布に従う
     # 帰無仮説：母集団のピアソン相関係数は0である(相関はない)
     # 対立仮説：母集団のピアソン相関係数は0以外である(相関がある)
     # 注：値がマイナスになるが、両側検定だから絶対値で考えてよい
@@ -281,8 +339,8 @@ def describe2(data1, data2):
             spearman += (d1 - d2)**2
         return 1 - ((6*spearman) / (n*(n**2-1)))
     
-    # スピアマン無相関検定(検定統計量)
-    # 自由度n-2のt分布に従う
+    # スピアマン無相関検定(検定統計量t)
+    # 検定統計量は自由度n-2のt分布に従う
     # 帰無仮説：母集団のスピアマン順位相関係数は0である(相関はない)
     # 対立仮説：母集団のスピアマン順位相関係数は0以外である(相関がある)
     # サンプルサイズが異なる場合、Errorを返す
@@ -314,7 +372,8 @@ def describe2(data1, data2):
         p = T / ((2*(2*n1+5)) / (9*n1*(n1-1)))**0.5
         return T
     
-    # ケンドール無相関検定(検定統計量)
+    # ケンドール無相関検定(検定統計量z)
+    # 検定統計量は標準正規分布に従う
     # サンプルサイズが異なる場合、Errorを返す
     # ソース：https://oceanone.hatenablog.com/entry/2020/04/28/022222
     def kendall_cor_test(data1, data2):
@@ -330,7 +389,7 @@ def describe2(data1, data2):
     # サンプルサイズが異なる場合、Errorを返す
     def simple_regression(data1, data2):
         nx, ny = length(data1), length(data2)
-        if nx!=ny: return 'Error', 'Error'
+        if nx!=ny: return 'Error', 'Error', 'Error'
         mx, my = mean(data1), mean(data2)
         sx2 = sum_value(data1**2)
         sxy = 0
@@ -340,7 +399,25 @@ def describe2(data1, data2):
         b = (sxy - nx*mx*my) / (sx2 - nx*mx**2)
         a = my - b*mx
         r2 = pearson_cor(data1, data2)**2
-        return "({:.3f}, {:.3f})".format(b, a), r2
+        return b, a, r2
+    
+    # 単回帰係数の無相関検定(検定統計量t)
+    # 単回帰における回帰係数が0でない(=きちんと影響がある)事を検定する
+    # 検定統計量は自由度n-2のt分布に従う
+    # 帰無仮説：回帰係数が0である
+    # 対立仮説：回帰係数が0ではない
+    # サンプルサイズが異なる場合、Errorを返す
+    def simple_regression_test(data1, data2):
+        b, a, r2 = simple_regression(data1, data2)
+        if r2 == 'Error': return 'Error', 'Error'
+        
+        n, mx = length(data1), mean(data1)
+        xx_, yy_ = 0, 0
+        for d1, d2 in zip(data1, data2):
+            xx_ += (d1 - mx)**2
+            yy_ += (d2 - (b*d1 + a))**2
+            
+        return (b*(xx_)**0.5) / (yy_/(n-2))**0.5, n-2
 
     # 等分散の検定(F比)
     # 帰無仮説：2群間の母分散に差がない(等分散である)
@@ -563,7 +640,8 @@ def describe2(data1, data2):
             return r_sum, (p_num+n_num)
 
 
-    sr_ba, sr_r2 = simple_regression(data1, data2)
+    sr_b, sr_a, sr_r2 = simple_regression(data1, data2)
+    srt_t, srt_df = simple_regression_test(data1, data2)
     f_test_f, f_test_df = f_test(data1, data2)
     ind_ttest_t, ind_ttest_df = independent_ttest(data1, data2)
     dep_ttest_t, dep_ttest_df = dependent_ttest(data1, data2)
@@ -582,6 +660,7 @@ def describe2(data1, data2):
         'std.p':std_p(data1),
         'std.s':std_s(data1),
         'std_e':std_e(data1),
+        'mean_95cl_known':mean_95cl_known(data1),
         'min':min_value(data1),
         '25%':quartile1(data1),
         '50%':median(data1),
@@ -590,6 +669,7 @@ def describe2(data1, data2):
         '25-75%':quartile_range(data1),
         'mid-range':mid_range(data1),
         'range':all_range(data1),
+        'mode':mode(data1),
         'cov':cov(data1),
         'gini':gini(data1),
         'skewness':skewness(data1),
@@ -599,8 +679,10 @@ def describe2(data1, data2):
         'Pearson_cor.t':pearson_cor(data1, data2),
         'Spearman_cor.t':spearman_cor(data1, data2),
         'Kendall_cor.z':kendall_cor(data1, data2),
-        'simple_regression':sr_ba,
-        'f_test.f':f_test_f,
+        'simple_regression':"({:.3f}, {:.3f})".format(sr_b, sr_a),
+        'simple_regression_test.t':srt_t,
+        'Jarque-Bara_test.x2':jarque_bera(data1),
+        'F_test.F':f_test_f,
         'ind_ztest.z':independent_ztest(data1, data2),
         'ind_ttest.t':ind_ttest_t,
         'ind_cohen_d':ind_cohen_d(data1, data2),
@@ -608,10 +690,10 @@ def describe2(data1, data2):
         'dep_ttest.t':dep_ttest_t,
         'dep_cohen_d':dep_cohen_d(data1, data2),
         'Welch_ttest.t':welch_ttest_t,
-        'Mann-Whitney_utest.u':mannwhitney_utest(data1, data2),
-        'Wilcoxon_rstest.tw':wilcoxon_rstest(data1, data2),
-        'sign_test.z':sign_test(data1, data2),
-        'Wilcoxon_srtest.tw':wilcoxon_srtest_Tw
+        'Mann-Whitney_utest.U':mannwhitney_utest(data1, data2),
+        'Wilcoxon_rstest.Tw':wilcoxon_rstest(data1, data2),
+        'sign_test.r':sign_test(data1, data2),
+        'Wilcoxon_srtest.Tw':wilcoxon_srtest_Tw
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -626,6 +708,7 @@ def describe2(data1, data2):
         'std.p':std_p(data2),
         'std.s':std_s(data2),
         'std_e':std_e(data2),
+        'mean_95cl_known':mean_95cl_known(data2),
         'min':min_value(data2),
         '25%':quartile1(data2),
         '50%':median(data2),
@@ -634,6 +717,7 @@ def describe2(data1, data2):
         '25-75%':quartile_range(data2),
         'mid-range':mid_range(data2),
         'range':all_range(data2),
+        'mode':mode(data2),
         'cov':cov(data2),
         'gini':gini(data2),
         'skewness':skewness(data2),
@@ -642,11 +726,13 @@ def describe2(data1, data2):
         'Spearman_cor.t':spearman_cor_test(data1, data2),
         'Kendall_cor.z':kendall_cor_test(data1, data2),
         'simple_regression':sr_r2,
-        'f_test.f':f_test_df,
+        'simple_regression_test.t':srt_df,
+        'Jarque-Bara_test.x2':jarque_bera(data2),
+        'F_test.F':f_test_df,
         'ind_ttest.t':ind_ttest_df,
         'dep_ttest.t':dep_ttest_df,
         'Welch_ttest.t':welch_ttest_v,
-        'Wilcoxon_srtest.tw':wilcoxon_srtest_df
+        'Wilcoxon_srtest.Tw':wilcoxon_srtest_df
     }, index=["data2"]).T
     
     # 結果出力
@@ -725,8 +811,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # 確率分布からデータを生成
-data1 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(0, 101, 100), columns=["data2"])["data2"]
+data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
 describe2(data1, data2)
 
 # 既存のライブラリで検証
