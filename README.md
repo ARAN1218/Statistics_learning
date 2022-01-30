@@ -23,6 +23,8 @@
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
 - 不偏標準偏差(std.s)
+- 標準誤差(std_e)
+- 区間推定（母分散既知）(mean_95cl_known)
 - 最小値(min)
 - 第一四分位数(25%)
 - 中央値(50%)
@@ -31,11 +33,13 @@
 - 四分位偏差(25-75%)
 - ミッドレンジ(mid-range)
 - レンジ(range)
+- 最頻値(mode)
 - ジニ係数(gini)
 - 歪度(skewness)
 - 尖度(kurtosis)
+- ジャック-ベラ検定(検定統計量x2)(Jarque-Bara_test.x2)
 
-#### グラフ
+#### グラフ(一標本)
 - 線グラフ
 - 散布図
 - ヒストグラム
@@ -57,6 +61,8 @@
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
 - 不偏標準偏差(std.s)
+- 標準誤差(std_e)
+- 区間推定（母分散既知）(mean_95cl_known)
 - 最小値(min)
 - 第一四分位数(25%)
 - 中央値(50%)
@@ -65,9 +71,11 @@
 - 四分位偏差(25-75%)
 - ミッドレンジ(mid-range)
 - レンジ(range)
+- 最頻値(mode)
 - ジニ係数(gini)
 - 歪度(skewness)
 - 尖度(kurtosis)
+- ジャック-ベラ検定(検定統計量x2)(Jarque-Bara_test.x2)
 
 #### 2つのデータから求めるもの
 - 母共分散(cov.p)
@@ -75,6 +83,8 @@
 - ピアソン相関係数&ピアソン無相関検定(検定統計量t)(Pearson_cor.t)
 - スピアマン相関係数&スピアマン無相関検定(検定統計量t)(Spearman_cor.t)
 - ケンドール相関係数&ケンドール無相関検定(検定統計量z)(Kendall_cor.z)
+- 単回帰分析(回帰係数&切片&決定係数)(simple_regression)
+- 単回帰係数の無相関検定(検定統計量t)(simple_regression_test.t)
 - F検定(検定統計量F)(F_test.F)
 - 対応なし2標本z検定(検定統計量z)(ind_ztest.z)
 - 対応なし2標本t検定(検定統計量t)(ind_ttest.t)
@@ -114,6 +124,8 @@
 - 不偏分散(var.s)
 - 母標準偏差(std.p)
 - 不偏標準偏差(std.s)
+- 標準誤差(std_e)
+- 区間推定（母分散既知）(mean_95cl_known)
 - 最小値(min)
 - 第一四分位数(25%)
 - 中央値(50%)
@@ -122,9 +134,11 @@
 - 四分位偏差(25-75%)
 - ミッドレンジ(mid-range)
 - レンジ(range)
+- 最頻値(mode)
 - ジニ係数(gini)
 - 歪度(skewness)
 - 尖度(kurtosis)
+- ジャック-ベラ検定(検定統計量x2)(Jarque-Bara_test.x2)
 
 #### 2つのデータから求めるもの
 - 母共分散(cov.p)
@@ -138,14 +152,22 @@
 
 #### 3つのデータから求めるもの
 - 偏相関係数(partial_cor)
+- 偏相関係数の無相関検定(検定統計量t)(partial_cor_test.t)
 - バートレット検定(検定統計量x2)(Bartlett_test.x2)
 - ルビーン検定(検定統計量F)(Levene_test.F)
+- ブラウンフォーサイス検定(検定統計量F)(Brown-Forsythe_test.F)
 - 一元配置分散分析(検定統計量F)(ANOVA.F)
 - 一元配置反復測定分散分析(検定統計量F)(RM_ANOVA.F)
 - クラスカル=ウォリス検定(検定統計量H)(Kruskal-Wallis_test.H)
 - フリードマン検定(検定統計量Q)(Friedman_test.Q)
 - テューキー・クレーマー検定(検定統計量q)(Tukey-kramer_test.q)
 - スティール・ドゥワス検定(検定統計量t)(Steel-dwass_test.t)
+
+#### グラフ(一標本)
+- ヒストグラム
+- 箱ひげ図
+- バイオリンプロット
+- イベントプロット
 
 Coming soon...
 
