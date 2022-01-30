@@ -28,22 +28,25 @@ def describe1(data):
     
     # 幾何平均
     # 比率や割合等について適用する
-    # フールプループとして、値が0のものは飛ばして計算する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
         ds = 1
         n = length(data)
         for d in data:
+            if d <= 0: return 'Error'
             ds *= d
         return (ds)**(1/n)
     
     # 調和平均
     # 時速の平均等に適用する
-    # フールプループとして、値が0のものは飛ばして計算する
+    # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
         ds = 0
         n = length(data)
         for d in data:
-            if d!=0:
+            if d <= 0:
+                return 'Error'
+            else:
                 ds += 1/d
         return 1 / ((1/n) * ds)
     
@@ -84,6 +87,13 @@ def describe1(data):
     # 標準誤差
     def std_e(data):
         return std_s(data) / length(data)**0.5
+    
+    # 母平均の95%信頼区間(母分散既知)
+    def mean_95cl_known(data):
+        n = length(data)
+        m = mean(data)
+        s = std_p(data)
+        return "({:.2f}, {:.2f})".format(m-1.96*(s/n)**0.5, m+1.96*(s/n)**0.5)
     
     # ソート（クイックソート）
     def quick_sort(data):
@@ -146,6 +156,30 @@ def describe1(data):
     def all_range(data):
         return max_value(data) - min_value(data)
     
+    # 最頻値
+    def mode(data):
+        # 個数を数える
+        data_sorted = quick_sort(data)
+        discoverd = {}
+        for d in data_sorted:
+            if d not in discoverd.keys():
+                discoverd[d] = 1
+            else:
+                discoverd[d] += 1
+        
+        # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
+        discoverd_sorted = sorted(discoverd.items(), key=lambda x:x[1], reverse=True)
+        mode = [discoverd_sorted[0][0]]
+        for i in range(length(discoverd_sorted)-1):
+            if discoverd_sorted[0][1] == discoverd_sorted[i+1][1]:
+                mode += [discoverd_sorted[i+1][0]]
+        
+        mode_str = "("
+        for m in mode:
+            mode_str += str(m) + ", "
+        mode_str += ")"
+        return mode_str
+    
     # 変動係数(coefficient of variance)
     # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
     # 比率の比較なので、比例尺度のみ使用できる
@@ -193,6 +227,29 @@ def describe1(data):
         
         return ((n*(n+1))/((n-1)*(n-2)*(n-3))) * four - (3*(n-1)**2)/((n-2)*(n-3))
     
+    # ジャック-ベラ検定(Jarque–Bera test)
+    # 標本が正規分布に従っているかどうかを検定する
+    # 帰無仮説：標本が正規分布に従う
+    # 対立仮説：標本が正規分布に従わない
+    # ソース：https://ja.wikipedia.org/wiki/ジャック–ベラ検定
+    def jarque_bera(data):
+        n = length(data)
+        m = mean(data)
+        
+        s2, s3, s4 = 0, 0, 0
+        for d in data:
+            s2 += (d - m)**2
+            s3 += (d - m)**3
+            s4 += (d - m)**4
+            
+        # 標本歪度
+        S = (s3/n) / (s2/n)**(3/2)
+        # 標本尖度
+        K = (s4/n) / (s2/n)**2
+        
+        JB = (n/6) * (S**2 + (1/4)*(K-3)**2)
+        return JB
+    
     
     # 結果出力
     display(pd.DataFrame({
@@ -207,6 +264,7 @@ def describe1(data):
         'std.p':std_p(data),
         'std.s':std_s(data),
         'std_e':std_e(data),
+        'mean_95cl_known':mean_95cl_known(data),
         'min':min_value(data),
         '25%':quartile1(data),
         '50%':median(data),
@@ -215,10 +273,12 @@ def describe1(data):
         '25-75%':quartile_range(data),
         'mid-range':mid_range(data),
         'range':all_range(data),
+        'mode':mode(data),
         'cov':cov(data),
         'gini':gini(data),
         'skewness':skewness(data),
-        'kurtosis':kurtosis(data)
+        'kurtosis':kurtosis(data),
+        'Jarque-Bara_test.x2':jarque_bera(data)
     }, index=["descriptive statistics"]).T)
     
     # 種々のグラフをプロット
@@ -277,5 +337,5 @@ def describe1(data):
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-data = pd.DataFrame([8,5,2,9,5,3,7,5], columns=["data"])["data"]
+data = pd.DataFrame(np.random.randint(1, 101, 100), columns=["data"])["data"]
 describe1(data)
