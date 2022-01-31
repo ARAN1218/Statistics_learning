@@ -169,17 +169,13 @@ def describe3(data1, data2, data3):
                 discoverd[d] += 1
         
         # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
-        discoverd_sorted = sorted(discoverd.items(), key=lambda x:x[1], reverse=True)
-        mode = [discoverd_sorted[0][0]]
-        for i in range(length(discoverd_sorted)-1):
-            if discoverd_sorted[0][1] == discoverd_sorted[i+1][1]:
-                mode += [discoverd_sorted[i+1][0]]
+        discoverd_keys, discoverd_values = list(discoverd.keys()), list(discoverd.values())
+        mode = [max_value(discoverd_values)]
+        for i, value in enumerate(discoverd_values):
+            if mode[0] == value:
+                mode += [discoverd_keys[i]]
         
-        mode_str = "("
-        for m in mode:
-            mode_str += str(m) + ", "
-        mode_str += ")"
-        return mode_str
+        return str(mode)
     
     # 変動係数(coefficient of variance)
     # 単位が無く、直接の比較が困難な場合に平均を考慮した上での比率の比較ができる
