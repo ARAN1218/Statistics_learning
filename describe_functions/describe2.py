@@ -30,25 +30,27 @@ def describe2(data1, data2):
     # 比率や割合等について適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
-        ds = 1
-        n = length(data)
-        for d in data:
-            if d <= 0: return 'Error'
-            ds *= d
-        return (ds)**(1/n)
+        try:
+            ds = 1
+            n = length(data)
+            for d in data:
+                ds *= d
+            return (ds)**(1/n)
+        except:
+            return 'Error'
     
     # 調和平均
     # 時速の平均等に適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
-        ds = 0
-        n = length(data)
-        for d in data:
-            if d <= 0:
-                return 'Error'
-            else:
+        try:
+            ds = 0
+            n = length(data)
+            for d in data:
                 ds += 1/d
-        return 1 / ((1/n) * ds)
+            return 1 / ((1/n) * ds)
+        except:
+            return 'Error'
     
     # 平均偏差
     def meand(data):
@@ -169,9 +171,10 @@ def describe2(data1, data2):
         
         # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
         discoverd_keys, discoverd_values = list(discoverd.keys()), list(discoverd.values())
-        mode = [max_value(discoverd_values)]
+        max_cnt = max_value(discoverd_values)
+        mode = []
         for i, value in enumerate(discoverd_values):
-            if mode[0] == value:
+            if max_cnt == value:
                 mode += [discoverd_keys[i]]
         
         return str(mode)
@@ -365,7 +368,6 @@ def describe2(data1, data2):
         
         N = (n1*(n1-1)) / 2
         T = (plus - minus) / ((N-zero1)**0.5 * (N-zero2)**0.5)
-        p = T / ((2*(2*n1+5)) / (9*n1*(n1-1)))**0.5
         return T
     
     # ケンドール無相関検定(検定統計量z)
@@ -385,7 +387,7 @@ def describe2(data1, data2):
     # サンプルサイズが異なる場合、Errorを返す
     def simple_regression(data1, data2):
         nx, ny = length(data1), length(data2)
-        if nx!=ny: return 'Error', 'Error', 'Error'
+        if nx!=ny: return np.nan, np.nan, 'Error'
         mx, my = mean(data1), mean(data2)
         sx2 = sum_value(data1**2)
         sxy = 0
@@ -405,7 +407,7 @@ def describe2(data1, data2):
     # サンプルサイズが異なる場合、Errorを返す
     def simple_regression_test(data1, data2):
         b, a, r2 = simple_regression(data1, data2)
-        if r2 == 'Error': return 'Error', 'Error'
+        if r2 == 'Error': return np.nan, np.nan
         
         n, mx = length(data1), mean(data1)
         xx_, yy_ = 0, 0
@@ -519,6 +521,27 @@ def describe2(data1, data2):
         data1_dec = data_linked[:data1_len]
         data2_dec = data_linked[data1_len:]
         return data1_dec, data2_dec
+    
+    # ムード検定(Mood test)
+    # 2標本の中央値を比較する
+    # サンプルサイズが小さい時(20未満)はムード検定表を参照し、大きい時(20以上)は標準正規分布表を参照する。
+    # 帰無仮説：2群間の母集団の中央値に差がない(母集団の中央値が等しい)
+    # 対立仮説：2群間の母集団の中央値に差がある(母集団の中央値が異なる)
+    def mood_test(data1, data2):
+        m, n = length(data1), length(data2)
+        N = m + n
+        data_ranked = quick_sort(rank_all(data1, data2)[0])
+        
+        # サンプルサイズが小さい時の検定統計量(20未満)
+        MD = 0
+        for R in data_ranked:
+            MD += (R - ((N+1)/2))**2
+            
+        # サンプルサイズが大きい時の検定統計量(20以上)
+        E = (m*(N**2 - 1)) / 12
+        V = (m*n*(N+1)*(N**2 - 4)) / 180
+        
+        return (MD - E) / V**0.5 if N>=20 else MD
     
     # マン=ホイットニーのU検定(Mann-Whitney u-test)
     # 対応のない2群間の中央値に差があるかを検定する
@@ -686,6 +709,7 @@ def describe2(data1, data2):
         'dep_ttest.t':dep_ttest_t,
         'dep_cohen_d':dep_cohen_d(data1, data2),
         'Welch_ttest.t':welch_ttest_t,
+        'Mood_test.z':mood_test(data1, data2),
         'Mann-Whitney_utest.U':mannwhitney_utest(data1, data2),
         'Wilcoxon_rstest.Tw':wilcoxon_rstest(data1, data2),
         'sign_test.r':sign_test(data1, data2),
@@ -809,7 +833,7 @@ import matplotlib.pyplot as plt
 # 確率分布からデータを生成
 data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
 data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
-describe2(data1, data2)
+describe2(data1, list(data2))
 
 # 既存のライブラリで検証
 from scipy import stats as st
@@ -818,5 +842,6 @@ print(st.spearmanr(data1, data2))
 print("indep_ttest", st.ttest_ind(data1, data2, equal_var=True))
 print("dep_ttest", st.ttest_rel(data1, data2))
 print("Welch", st.ttest_ind(data1, data2, equal_var=False))
+print("Mood", st.mood(data1, data2))
 print(st.mannwhitneyu(data1, data2, alternative='two-sided'))
 print(st.wilcoxon(data1, data2))
