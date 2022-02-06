@@ -31,25 +31,27 @@ def describe3(data1, data2, data3):
     # 比率や割合等について適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
-        ds = 1
-        n = length(data)
-        for d in data:
-            if d <= 0: return 'Error'
-            ds *= d
-        return (ds)**(1/n)
+        try:
+            ds = 1
+            n = length(data)
+            for d in data:
+                ds *= d
+            return (ds)**(1/n)
+        except:
+            return 'Error'
     
     # 調和平均
     # 時速の平均等に適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
-        ds = 0
-        n = length(data)
-        for d in data:
-            if d <= 0:
-                return 'Error'
-            else:
+        try:
+            ds = 0
+            n = length(data)
+            for d in data:
                 ds += 1/d
-        return 1 / ((1/n) * ds)
+            return 1 / ((1/n) * ds)
+        except:
+            return 'Error'
     
     # 平均偏差
     def meand(data):
@@ -170,9 +172,10 @@ def describe3(data1, data2, data3):
         
         # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
         discoverd_keys, discoverd_values = list(discoverd.keys()), list(discoverd.values())
-        mode = [max_value(discoverd_values)]
+        max_cnt = max_value(discoverd_values)
+        mode = []
         for i, value in enumerate(discoverd_values):
-            if mode[0] == value:
+            if max_cnt == value:
                 mode += [discoverd_keys[i]]
         
         return str(mode)
@@ -386,7 +389,6 @@ def describe3(data1, data2, data3):
         
         N = (n1*(n1-1)) / 2
         T = (plus - minus) / ((N-zero1)**0.5 * (N-zero2)**0.5)
-        p = T / ((2*(2*n1+5)) / (9*n1*(n1-1)))**0.5
         return T
     
     # ケンドール無相関検定(検定統計量z)
@@ -668,7 +670,7 @@ def describe3(data1, data2, data3):
         n = l1 + l2 + l3
         k = 3
         E, V = [], []
-        for first, second in [((data1,l1), (data2,l2)), ((data1,l1), (data3,l3)), ((data2,l2), (data3,l3))]:
+        for first, second in [((data2,l2), (data3,l3)), ((data1,l1), (data3,l3)), ((data1,l1), (data2,l2))]:
             N = first[1] + second[1]
             E += [(first[1]*(N+1)) / 2]
             
@@ -676,10 +678,10 @@ def describe3(data1, data2, data3):
             f, s, f2 = sum_value(f), sum_value(s), sum_value(f2)
             V += [(((first[1]*second[1])/(N*(N-1))) * ((f+s) - ((N*(N+1)**2)/4)), f2)]
             
-        sd1 = "({:.3f}, {:.3f})".format(abs(V[0][1]-E[0])/(V[0][0])**0.5, 3.31/(2)**0.5)
-        sd2 = "({:.3f}, {:.3f})".format(abs(V[1][1]-E[1])/(V[1][0])**0.5, 3.31/(2)**0.5)
-        sd3 = "({:.3f}, {:.3f})".format(abs(V[2][1]-E[2])/(V[2][0])**0.5, 3.31/(2)**0.5)
-        return sd1, sd2, sd3
+        sd23 = "({:.3f}, {:.3f})".format(abs(V[0][1]-E[0])/(V[0][0])**0.5, 3.31/(2)**0.5)
+        sd13 = "({:.3f}, {:.3f})".format(abs(V[1][1]-E[1])/(V[1][0])**0.5, 3.31/(2)**0.5)
+        sd12 = "({:.3f}, {:.3f})".format(abs(V[2][1]-E[2])/(V[2][0])**0.5, 3.31/(2)**0.5)
+        return sd23, sd13, sd12
 
     
     bl_x2, bl_df = bartlett_test(data1, data2, data3)
@@ -690,7 +692,7 @@ def describe3(data1, data2, data3):
     kw_h, kw_k = kruskalwallis_test(data1, data2, data3)
     fm_x20, fm_k = friedman_test(data1, data2, data3)
     tk1, tk2, tk3 = tukey_kramer(data1, data2, data3)
-    sd1, sd2, sd3 = steel_dwass(data1, data2, data3)
+    sd23, sd13, sd12 = steel_dwass(data1, data2, data3)
     #print(st.kstest(data1, st.norm(loc=mean(data1), scale=std_s(data1)).cdf))
     
     
@@ -740,7 +742,7 @@ def describe3(data1, data2, data3):
         'Kruskal-Wallis_test.H':kw_h,
         "Friedman_test.Q":fm_x20,
         "Tukey-kramer_test.q":tk1,
-        "Steel-dwass_test.t":sd1
+        "Steel-dwass_test.t":sd23
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -789,7 +791,7 @@ def describe3(data1, data2, data3):
         'Kruskal-Wallis_test.H':kw_k,
         "Friedman_test.Q":fm_k,
         "Tukey-kramer_test.q":tk2,
-        "Steel-dwass_test.t":sd2
+        "Steel-dwass_test.t":sd13
     }, index=["data2"]).T
     
     df3 = pd.DataFrame({
@@ -833,7 +835,7 @@ def describe3(data1, data2, data3):
         'ANOVA.F':anova_dfb,
         'RM_ANOVA.F':rm_anova_df_error,
         "Tukey-kramer_test.q":tk3,
-        "Steel-dwass_test.t":sd3
+        "Steel-dwass_test.t":sd12
     }, index=["data3"]).T
     
     # 結果出力
