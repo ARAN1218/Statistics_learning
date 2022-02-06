@@ -30,25 +30,27 @@ def describe1(data):
     # 比率や割合等について適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def geometric_mean(data):
-        ds = 1
-        n = length(data)
-        for d in data:
-            if d <= 0: return 'Error'
-            ds *= d
-        return (ds)**(1/n)
+        try:
+            ds = 1
+            n = length(data)
+            for d in data:
+                ds *= d
+            return (ds)**(1/n)
+        except:
+            return 'Error'
     
     # 調和平均
     # 時速の平均等に適用する
     # 0以下の値が含まれていた場合、規格外としてErrorを出す
     def harmonic_mean(data):
-        ds = 0
-        n = length(data)
-        for d in data:
-            if d <= 0:
-                return 'Error'
-            else:
+        try:
+            ds = 0
+            n = length(data)
+            for d in data:
                 ds += 1/d
-        return 1 / ((1/n) * ds)
+            return 1 / ((1/n) * ds)
+        except:
+            return 'Error'
     
     # 平均偏差
     def meand(data):
@@ -169,9 +171,10 @@ def describe1(data):
         
         # 個数が最大のデータを検索する(複数個ある場合は全て出力する)
         discoverd_keys, discoverd_values = list(discoverd.keys()), list(discoverd.values())
-        mode = [max_value(discoverd_values)]
+        max_cnt = max_value(discoverd_values)
+        mode = []
         for i, value in enumerate(discoverd_values):
-            if mode[0] == value:
+            if max_cnt == value:
                 mode += [discoverd_keys[i]]
         
         return str(mode)
