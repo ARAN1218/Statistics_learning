@@ -34,11 +34,22 @@ def one_way_ANOVA(df):
     df_p['sign'] = df_p['p'].apply(lambda x : '**' if x < 0.01 else '*' if x < 0.05 else '')
     df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Columns','Error']).fillna('')
     
+    # 因子の効果をデータフレームにまとめる
+    df_effect = pd.DataFrame(f1_effect).T.set_axis(['Effect'])
+    
     # 結果を出力する
-    return df_ANOVA
+    return df_ANOVA, df_effect
 
 
 # テスト
-df_1 = pd.DataFrame([[8,10,12], [4,8,12]]).set_axis(['B0', 'B1', 'B2'], axis=1)
+import numpy as np
+import pandas as pd
+import scipy.stats as st
+
+df_1 = pd.DataFrame([[8,10,12], [4,8,12]]).set_axis(['b0', 'b1', 'b2'], axis=1)
+print("入力：")
 display(df_1)
-one_way_ANOVA(df_1)
+
+df_ANOVA, df_effect = one_way_ANOVA(df_1)
+print("出力：")
+display(df_ANOVA, df_effect)
