@@ -76,16 +76,27 @@ def three_way_ANOVA(df_list):
     df_p['sign'] = df_p['p'].apply(lambda x : '**' if x < 0.01 else '*' if x < 0.05 else '')
     df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Index', 'Columns', 'Tables', 'Index*Columns', 'Index*Tables', 'Columns*Tables', 'Error']).fillna('')
     
+    # 因子の効果をデータフレームにまとめる
+    df_effect = pd.DataFrame(pd.concat([f1_effect, f2_effect, f3_effect])).T.set_axis(['Effect'])
+    
     # 結果を出力する
-    return df_ANOVA
+    return df_ANOVA, df_effect
 
 
 # テスト
+import numpy as np
+import pandas as pd
+import scipy.stats as st
+
 df_3_no = pd.DataFrame([[9,10,12], [4,8,10], [6,9,12], [2,6,13]]).set_axis(['b0', 'b1', 'b2'], axis=1).set_axis(['a0', 'a1', 'a0', 'a1'], axis=0)
 df_3_no_upper = df_3_no.iloc[:2]
 df_3_no_under = df_3_no.iloc[2:]
+print("入力：")
 display(df_3_no)
 display(df_3_no_upper)
 display(df_3_no_under)
+
 df_3_no_list = [df_3_no_upper, df_3_no_under]
-three_way_ANOVA(df_3_no_list)
+df_ANOVA, df_effect = three_way_ANOVA(df_3_no_list)
+print("出力：")
+display(df_ANOVA, df_effect)
