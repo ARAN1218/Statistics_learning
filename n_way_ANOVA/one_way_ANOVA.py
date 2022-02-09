@@ -13,9 +13,13 @@ def one_way_ANOVA(df):
     df_error = df.copy() - f1_mean
     Se = (df_error**2).sum().sum()
     
+    # 総変動Stを求める
+    St = ((df-f_mean)**2).sum().sum()
+    
     # 自由度dfを求める
     df1 = f1 - 1
     dfe = f1*(n-1)
+    dft = df1 + dfe
     
     # 不偏分散Vを求める
     V1 = S1 / df1
@@ -26,13 +30,13 @@ def one_way_ANOVA(df):
     p = 1 - st.f.cdf(F, dfn=df1, dfd=dfe)
     
     # 分散分析表を作成する
-    df_S = pd.Series([S1, Se])
-    df_df = pd.Series([df1, dfe])
+    df_S = pd.Series([S1, Se, St])
+    df_df = pd.Series([df1, dfe, dft])
     df_V = pd.Series([V1, Ve])
     df_F = pd.Series([F])
     df_p = pd.DataFrame([p], columns=['p'])
     df_p['sign'] = df_p['p'].apply(lambda x : '**' if x < 0.01 else '*' if x < 0.05 else '')
-    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Columns','Error']).fillna('')
+    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Columns','Error', 'Total']).fillna('')
     
     # 因子の効果をデータフレームにまとめる
     df_effect = pd.DataFrame(f1_effect).T.set_axis(['Effect'])
