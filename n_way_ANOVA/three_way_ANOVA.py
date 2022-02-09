@@ -30,8 +30,8 @@ def three_way_ANOVA(df_list):
     S23 = S2_3 - S2 - S3
     
     # 誤差変動Seを求める
-    S = sum([((df-f_mean)**2).sum().sum() for df in df_list])
-    Se = S - S1 - S2 - S3 - S12 - S13 - S23
+    St = sum([((df-f_mean)**2).sum().sum() for df in df_list])
+    Se = St - S1 - S2 - S3 - S12 - S13 - S23
     
     # 自由度dfを求める
     df1 = f2_len - 1
@@ -41,6 +41,7 @@ def three_way_ANOVA(df_list):
     df13 = df1 * df3
     df23 = df2 * df3
     dfe = df1 * df2 * df3
+    dft = df1 + df2 + df3 + df12 + df13 + df23 + dfe
     
     # 不偏分散Vを求める
     V1 = S1 / df1
@@ -68,13 +69,13 @@ def three_way_ANOVA(df_list):
     p23 = 1 - st.f.cdf(F23, dfn=df23, dfd=dfe)
     
     # 分散分析表を作成する
-    df_S = pd.Series([S1, S2, S3, S12, S13, S23, Se])
-    df_df = pd.Series([df1, df2, df3, df12, df13, df23, dfe])
+    df_S = pd.Series([S1, S2, S3, S12, S13, S23, Se, St])
+    df_df = pd.Series([df1, df2, df3, df12, df13, df23, dfe, dft])
     df_V = pd.Series([V1, V2, V3, V12, V13, V23, Ve])
     df_F = pd.Series([F1, F2, F3, F12, F13, F23])
     df_p = pd.DataFrame([p1, p2, p3, p12, p13, p23], columns=['p'])
     df_p['sign'] = df_p['p'].apply(lambda x : '**' if x < 0.01 else '*' if x < 0.05 else '')
-    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Index', 'Columns', 'Tables', 'Index*Columns', 'Index*Tables', 'Columns*Tables', 'Error']).fillna('')
+    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Index', 'Columns', 'Tables', 'Index*Columns', 'Index*Tables', 'Columns*Tables', 'Error', 'Total']).fillna('')
     
     # 因子の効果をデータフレームにまとめる
     df_effect = pd.DataFrame(pd.concat([f1_effect, f2_effect, f3_effect])).T.set_axis(['Effect'])
