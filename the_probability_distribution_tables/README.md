@@ -1,2 +1,2 @@
-自分がexcelで計算して作成した種々の確率分布表です。
-describe関数の出力を基に分析する際にお使いください。
+# the_probability_distribution_tables
+自分がexcelで計算して作成した種々の確率分布表です。describe関数の出力を基に分析する際にお使いください。
