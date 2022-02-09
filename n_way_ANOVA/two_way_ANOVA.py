@@ -9,16 +9,16 @@ def two_way_ANOVA(df):
     S1 = ((f1_effect**2) * f1_len).sum()
     S2 = ((f2_effect**2) * f2_len).sum()
     
-    # 誤差変動Seを求めるため、総変動Sを求める
-    df_all = df.copy()
-    df_all -= f_mean
-    S = (df_all**2).sum().sum()
-    Se = S - S1 - S2
+    # 誤差変動Seを求めるため、総変動Stを求める
+    df_total = df.copy() - f_mean
+    St = (df_total**2).sum().sum()
+    Se = St - S1 - S2
     
     # 自由度df(=それぞれの因子の水準数)を求める
     df1 = f2_len - 1
     df2 = f1_len - 1
     dfe = df1*df2
+    dft = df1 + df2 + dfe
     
     # 不偏分散Vを求める
     V1 = S1 / df1
@@ -34,13 +34,13 @@ def two_way_ANOVA(df):
     p2 = 1 - st.f.cdf(F2, dfn=df2, dfd=dfe)
     
     # 分散分析表を作成する
-    df_S = pd.Series([S1, S2, Se])
-    df_df = pd.Series([df1, df2, dfe])
+    df_S = pd.Series([S1, S2, Se, St])
+    df_df = pd.Series([df1, df2, dfe, dft])
     df_V = pd.Series([V1, V2, Ve])
     df_F = pd.Series([F1, F2])
     df_p = pd.DataFrame([p1, p2], columns=['p'])
     df_p['sign'] = df_p['p'].apply(lambda x : '**' if x < 0.01 else '*' if x < 0.05 else '')
-    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Index', 'Columns','Error']).fillna('')
+    df_ANOVA = pd.concat([df_S, df_df, df_V, df_F, df_p], axis=1).set_axis(['S','df','V','F','p','sign'], axis=1).set_axis(['Index', 'Columns','Error', 'Total']).fillna('')
     
     # 因子の効果をデータフレームにまとめる
     df_effect = pd.DataFrame(pd.concat([f1_effect, f2_effect])).T.set_axis(['Effect'])
