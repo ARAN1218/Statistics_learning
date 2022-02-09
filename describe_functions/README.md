@@ -1,4 +1,5 @@
-# Descriptive_statistics_functions
+# describe_functions
+
 ## 概要
 統計学の勉強も兼ねて、データを入力として記述統計情報を**一から計算して**出力するdescribe関数を作っています。  
 なので、なるべく便利なライブラリを用いず、計算過程が分かりやすい様にプログラムを書いています。  
