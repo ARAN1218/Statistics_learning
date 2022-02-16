@@ -13,7 +13,7 @@
 
 
 ## 内容
-大まかに4つに分類しています。
+大まかに**5つ**に分類しています。
 
 ### [describe_functions](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/describe_functions)
 - Pandasのdescribeメソッドに感動し、同時に失望したので思いついた関数。あらゆる統計量を網羅的に出力します。
@@ -30,3 +30,7 @@
 ### [n_way_ANOVA](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/n_way_ANOVA)
 - 実験計画法を勉強していく内に分散分析の面白さに気がつき、n元配置分散分析(nは3以下の自然数)をPythonで実装しました。
 - 二元配置分散分析以降は繰返しの有無で関数を分けて作成しています。
+
+### [cross_tabulation](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/cross_tabulation)
+- 質的変数を分析する手法としてクロス集計に関する統計的検定を自動化しました。
+- 情報量としてはscipyに負けてしまっているので、何とか優位性を作りたいと思っています。
