@@ -33,4 +33,4 @@
 
 ### [cross_tabulation](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/cross_tabulation)
 - 質的変数を分析する手法としてクロス集計に関する統計的検定を自動化しました。
-- 情報量としてはscipyに負けてしまっているので、何とか優位性を作りたいと思っています。
+- 期待度数表の出力は勿論、イェーツの補正有無を両方とも出力します。
