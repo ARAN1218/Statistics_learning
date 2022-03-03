@@ -301,10 +301,10 @@ def describe1(data):
     plt.title("Histogram(cumulative)")
     plt.show()
     
-    # 円グラフ(データに負の値があると使えないらしいので一旦停止)
-    #plt.pie(data, radius=3, center=(4, 4), wedgeprops={"linewidth": 1, "edgecolor": "white"}, frame=True)
-    #plt.title("Piechart")
-    #plt.show()
+    # Q-Qプロット
+    # 点が一直線に並んでいれば、そのデータの母集団の分布は正規分布に従う
+    st.probplot(data, dist="norm", plot=plt)
+    plt.show()
     
     # 箱ひげ図
     plt.boxplot(data)
@@ -336,5 +336,6 @@ def describe1(data):
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.stats as st
 data = pd.DataFrame(np.random.randint(1, 101, 100), columns=["data"])["data"]
 describe1(data)
