@@ -761,19 +761,27 @@ def describe2(data1, data2):
     # 種々のグラフをプロット
     # ヒストグラム
     fig, axes= plt.subplots(1,2)
-    axes[0].hist(data1)
-    axes[1].hist(data2)
+    axes[0].hist(data1, bins=(1+int(np.log2(length(data1)))))
+    axes[1].hist(data2, bins=(1+int(np.log2(length(data2)))))
     plt.show()
     
+    # ヒストグラム(累積)
+    fig, axes= plt.subplots(1,2)
+    axes[0].hist(data1, bins=(1+int(np.log2(length(data1)))), cumulative=True)
+    axes[1].hist(data2, bins=(1+int(np.log2(length(data2)))), cumulative=True)
+    plt.show()
+    
+    # Q-Qプロット
+    # 点が一直線に並んでいれば、そのデータの母集団の分布は正規分布に従う
+    fig, axes= plt.subplots(1,2)
+    st.probplot(data1, dist="norm", plot=axes[0])
+    st.probplot(data2, dist="norm", plot=axes[1])
+    plt.show()
+
     # 箱ひげ図
     plt.boxplot([data1, data2], positions=[1, 2])
     plt.title("Boxplot")
     plt.show()
-    
-    # エラーバー
-    #plt.errorbar(data1, data2)
-    #plt.title("Error bar")
-    #plt.show()
     
     # バイオリンプロット
     plt.violinplot([data1, data2], positions=[1.2, 1.8])
@@ -829,6 +837,7 @@ def describe2(data1, data2):
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy import stats as st
 
 # 確率分布からデータを生成
 data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
@@ -836,7 +845,6 @@ data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data
 describe2(data1, list(data2))
 
 # 既存のライブラリで検証
-from scipy import stats as st
 print("PearsonrResult", st.pearsonr(data1, data2))
 print(st.spearmanr(data1, data2))
 print("indep_ttest", st.ttest_ind(data1, data2, equal_var=True))
