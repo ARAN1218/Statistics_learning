@@ -844,9 +844,24 @@ def describe3(data1, data2, data3):
     # 種々のグラフをプロット
     # ヒストグラム
     fig, axes= plt.subplots(1,3)
-    axes[0].hist(data1)
-    axes[1].hist(data2)
-    axes[2].hist(data3)
+    axes[0].hist(data1, bins=(1+int(np.log2(length(data1)))))
+    axes[1].hist(data2, bins=(1+int(np.log2(length(data2)))))
+    axes[2].hist(data3, bins=(1+int(np.log2(length(data3)))))
+    plt.show()
+    
+    # ヒストグラム(累積)
+    fig, axes= plt.subplots(1,3)
+    axes[0].hist(data1, bins=(1+int(np.log2(length(data1)))), cumulative=True)
+    axes[1].hist(data2, bins=(1+int(np.log2(length(data2)))), cumulative=True)
+    axes[2].hist(data3, bins=(1+int(np.log2(length(data3)))), cumulative=True)
+    plt.show()
+    
+    # Q-Qプロット
+    # 点が一直線に並んでいれば、そのデータの母集団の分布は正規分布に従う
+    fig, axes= plt.subplots(1,3)
+    st.probplot(data1, dist="norm", plot=axes[0])
+    st.probplot(data2, dist="norm", plot=axes[1])
+    st.probplot(data3, dist="norm", plot=axes[2])
     plt.show()
     
     # 箱ひげ図
@@ -865,10 +880,10 @@ def describe3(data1, data2, data3):
     plt.show()
     
     
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from scipy import stats as st
 
 # ランダム分布
 data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
@@ -877,7 +892,6 @@ data3 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data3"])["data
 describe3(data1, data2, data3)
 
 # 既存ライブラリで検証
-from scipy import stats as st
 print("PearsonrResult" + str(st.pearsonr(data1, data2)))
 print(st.spearmanr(data1, data2))
 print(st.kendalltau(data1, data2))
