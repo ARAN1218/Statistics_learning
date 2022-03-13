@@ -3,7 +3,11 @@ def correspondence(df_test):
     mca_counts = mca.MCA(df_test)
     rows = mca_counts.fs_r(N=2) # 表側データ
     cols = mca_counts.fs_c(N=2) # 表頭データ
-
+    
+    # 第一成分と第二成分の固有値と寄与率をデータフレームとして出力する
+    df_display = pd.DataFrame([mca_counts.L[:2], mca_counts.expl_var(greenacre=True, N=2)*100], columns=['1', '2'], index=['Eigen', 'Contribution']).T
+    display(df_display)
+    
     # 散布図の下地を作る
     plt.figure(figsize=(10,8))
     plt.axhline(y=0)
