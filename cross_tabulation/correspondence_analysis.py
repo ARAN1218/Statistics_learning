@@ -4,9 +4,15 @@ def correspondence(df_test):
     rows = mca_counts.fs_r(N=2) # 表側データ
     cols = mca_counts.fs_c(N=2) # 表頭データ
     
+    # 表側・表頭データの第一成分と第二成分の値をデータフレームとして出力する
+    df_rows = pd.DataFrame([rows[:,0], rows[:,1]], columns=df_test.index, index=['X', 'Y']).T
+    df_cols = pd.DataFrame([cols[:,0], cols[:,1]], columns=df_test.columns, index=['X', 'Y']).T
+    df_rows_cols = pd.concat([df_rows, df_cols])
+    display(df_rows_cols)
+    
     # 第一成分と第二成分の固有値と寄与率をデータフレームとして出力する
-    df_display = pd.DataFrame([mca_counts.L[:2], mca_counts.expl_var(greenacre=True, N=2)*100], columns=['1', '2'], index=['Eigen', 'Contribution']).T
-    display(df_display)
+    df_factors = pd.DataFrame([mca_counts.L[:2], mca_counts.expl_var(greenacre=True, N=2)*100], columns=['X', 'Y'], index=['Eigen', 'Contribution']).rename_axis('Factors', axis=1).T
+    display(df_factors)
     
     # 散布図の下地を作る
     plt.figure(figsize=(10,8))
