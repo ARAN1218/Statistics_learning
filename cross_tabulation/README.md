@@ -91,10 +91,11 @@
 #### 使い方
 テスト1
 
-<img width="385" alt="スクリーンショット 2022-03-11 19 09 30" src="https://user-images.githubusercontent.com/67265109/157847039-5a4f3c37-0d9a-42b0-8a94-63069f9b0353.png">
+<img width="383" alt="スクリーンショット 2022-03-15 21 07 54" src="https://user-images.githubusercontent.com/67265109/158374757-0b66fc8a-d54e-4e03-b990-5206ee57c78f.png">
 テスト2
 
-<img width="389" alt="スクリーンショット 2022-03-11 19 10 04" src="https://user-images.githubusercontent.com/67265109/157847060-6ed6545d-2c2e-495d-9988-37632a5d9a94.png">
+<img width="390" alt="スクリーンショット 2022-03-15 21 08 05" src="https://user-images.githubusercontent.com/67265109/158374777-c68487c5-962c-494f-9239-5a9031a6295c.png">
+
 
 1. 上記画像のデータフレームの様に、行に原因(=結果に影響すると思われる因子)、列に結果を定めた分割表を作成する。
 2. このデータフレームを引数としてodds_risk_ratio関数を実行する。
