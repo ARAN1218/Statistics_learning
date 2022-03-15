@@ -8,7 +8,6 @@ def odds_risk_ratio(df_test):
     # 95%CLを計算する
     odds_95CL = [odds_ratio*np.exp(i * np.sqrt(1/df_test.iat[0, 0] + 1/df_test.iat[0, 1] + 1/df_test.iat[1, 0] + 1/df_test.iat[1, 1])) for i in [-1.96, 1.96]]
     
-    
     # リスク比を計算する
     risk_list = []
     for df in df_test.iterrows():
@@ -29,11 +28,8 @@ def odds_risk_ratio(df_test):
     
     # オッズ比についてフォレストプロットを行う
     plt.figure(figsize=(5,3))
-    plt.errorbar(['odds_ratio', 'risk_ratio'], [odds_ratio, risk_ratio], fmt='o', ecolor='red', color='black', markersize=8)
-    plt.errorbar(['odds_ratio'], [odds_ratio], yerr=odds_95CL[0], capsize=4, label="uplims", uplims=True, color='blue')
-    plt.errorbar(['odds_ratio'], [odds_ratio], yerr=odds_95CL[1], capsize=4, label="lolims", lolims=True, color='blue')
-    plt.errorbar(['risk_ratio'], [risk_ratio], yerr=risk_95CL[0], capsize=4, label="uplims", uplims=True, color='red')
-    plt.errorbar(['risk_ratio'], [risk_ratio], yerr=risk_95CL[1], capsize=4, label="lolims", lolims=True, color='red')
+    plt.errorbar(['odds_ratio'], [odds_ratio], yerr=[[odds_95CL[0]], [odds_95CL[1]]], capsize=4, fmt='o', ecolor='blue', color='black', markersize=8)
+    plt.errorbar(['risk_ratio'], [risk_ratio], yerr=[[risk_95CL[0]], [risk_95CL[1]]], capsize=4, fmt='o', ecolor='red', color='black', markersize=8)
     plt.xticks([-1, 0, 1, 2])
     plt.axhline(y=1)
     plt.show()
