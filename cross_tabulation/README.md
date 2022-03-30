@@ -111,6 +111,7 @@
 - コレスポンデンス分析(対応分析)を略して「コレポン」と呼ぶ場合が多い。
 
 #### 使い方
+<img width="985" alt="スクリーンショット 2022-03-30 13 22 56" src="https://user-images.githubusercontent.com/67265109/160750936-5ba376ec-0232-4216-95b4-095ebdb674e8.png">
 <img width="214" alt="スクリーンショット 2022-03-14 22 05 04" src="https://user-images.githubusercontent.com/67265109/158177830-eba47fee-d3a1-4cd1-a663-ecbd94db10dc.png">
 <img width="211" alt="スクリーンショット 2022-03-14 22 05 21" src="https://user-images.githubusercontent.com/67265109/158177848-516b0686-3702-4150-80a8-756a6094dd8e.png">
 <img width="623" alt="スクリーンショット 2022-03-14 22 05 33" src="https://user-images.githubusercontent.com/67265109/158177855-0850c43e-16cd-41a1-87ed-1f9ff3fba420.png">
