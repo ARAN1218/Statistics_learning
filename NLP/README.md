@@ -12,7 +12,9 @@
 
 
 #### 使い方
-<img width="1066" alt="スクリーンショット 2022-03-30 12 53 36" src="https://user-images.githubusercontent.com/67265109/160748142-0e971935-efa6-49e1-b34f-6c6eecdf8f84.png">
+<img width="95" alt="スクリーンショット 2022-03-30 12 57 48" src="https://user-images.githubusercontent.com/67265109/160748632-0f00c14e-cfdd-4e32-8801-d56965230a87.png">
+<img width="565" alt="スクリーンショット 2022-03-30 12 57 57" src="https://user-images.githubusercontent.com/67265109/160748640-b2c2e9be-d39a-4bcc-b684-525c4ec52ba0.png">
 
 1. アンケートの感想等、解析したいテキストデータの入ったSeries型のデータを引数に入れ、wordcloud関数を実行する。
 2. 引数に入れた全ての文章に対してワードクラウドが作成され、出力される。
+3. ワードクラウドを元に分析する。(このワードクラウドでは、文字の向き・色は関係ない)
