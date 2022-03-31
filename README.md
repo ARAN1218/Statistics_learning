@@ -34,3 +34,8 @@
 ### [cross_tabulation](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/cross_tabulation)
 - 質的変数を分析する手法としてクロス集計に関する統計的検定を自動化しました。
 - 期待度数表の出力は勿論、イェーツの補正有無を両方とも出力します。
+
+### [NLP(Natural Language Processing)](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/NLP)
+- アンケートデータ等のテキストマイニングの手法について、Pythonで実装できるものをまとめました。
+- 環境構築が少々面倒かもしれません...
+
