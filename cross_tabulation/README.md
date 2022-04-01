@@ -114,7 +114,7 @@
 <img width="985" alt="スクリーンショット 2022-03-30 13 22 56" src="https://user-images.githubusercontent.com/67265109/160750936-5ba376ec-0232-4216-95b4-095ebdb674e8.png">
 <img width="214" alt="スクリーンショット 2022-03-14 22 05 04" src="https://user-images.githubusercontent.com/67265109/158177830-eba47fee-d3a1-4cd1-a663-ecbd94db10dc.png">
 <img width="211" alt="スクリーンショット 2022-03-14 22 05 21" src="https://user-images.githubusercontent.com/67265109/158177848-516b0686-3702-4150-80a8-756a6094dd8e.png">
-<img width="623" alt="スクリーンショット 2022-03-14 22 05 33" src="https://user-images.githubusercontent.com/67265109/158177855-0850c43e-16cd-41a1-87ed-1f9ff3fba420.png">
+<img width="624" alt="スクリーンショット 2022-04-01 19 51 30" src="https://user-images.githubusercontent.com/67265109/161249820-9c8e3bc5-378a-4272-8d36-45621823b12b.png">
 
 
 1. 上記画像のデータフレームの様にクロス集計表を用意する。
