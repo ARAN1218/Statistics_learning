@@ -1,3 +1,12 @@
+# 必要なライブラリをインポート
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import japanize_matplotlib
+import mca
+from adjustText import adjust_text
+
+
 def correspondence(df_test):
     # 質的データ版の主成分分析を実行する
     mca_counts = mca.MCA(df_test)
@@ -20,6 +29,9 @@ def correspondence(df_test):
     plt.axvline(x=0)
 
     # 表側データのプロット
+    plt.title('correspondence analysis', fontsize=20)
+    plt.xlabel('Dim 1({:.2f}%)'.format(df_factors['Contribution']['X']), fontsize=13)
+    plt.ylabel('Dim 2({:.2f}%)'.format(df_factors['Contribution']['Y']), fontsize=13)
     plt.scatter(rows[:,0], rows[:,1], c='b', marker='o')
     labels = df_test.index
     texts = [plt.text(rows[:,0][k], rows[:,1][k], labels[k], ha='center', va='center', fontsize=13) for k in range(0, len(labels))]
