@@ -165,6 +165,8 @@
 - フリードマン検定(検定統計量Q)(Friedman_test.Q)
 - テューキー・クレーマー検定(検定統計量q)(Tukey-kramer_test.q)
 - スティール・ドゥワス検定(検定統計量t)(Steel-dwass_test.t)
+- ダネット検定(検定統計量t)(Dunnett_test.t)
+- スティール検定(検定統計量t)(Steel_test.t)
 
 #### グラフ(一標本)
 - ヒストグラム
@@ -189,8 +191,10 @@ Coming soon...
 - 統計学図鑑　栗原伸一ほか　オーム社(2017)
 - 44の例題で学ぶ 統計的検定と推定の解き方　上田拓治　オーム社(2009)
 - ノンパラメトリック統計　前園宜彦　共立出版(2019)
+- 統計的多重比較法の基礎　永田 靖　サイエンティスト社(1997)
 
 ![Unknown](https://user-images.githubusercontent.com/67265109/145838872-156f49a7-75ee-486e-8bf3-565803fe22ec.jpeg)
 ![Unknown](https://user-images.githubusercontent.com/67265109/145839013-6cbf6a0b-33de-40d7-ac06-719985cd3be9.jpeg)
 ![Unknown](https://user-images.githubusercontent.com/67265109/145839027-9d735397-942c-44dd-8b5d-f7fdb5dd33e9.jpeg)
 ![Unknown](https://user-images.githubusercontent.com/67265109/153242943-0805af3a-335a-4fd9-85c8-a79270a0aa26.png)
+![Unknown](https://user-images.githubusercontent.com/67265109/161384948-797519bc-6923-4a30-8022-4ffbbe444181.jpg)
