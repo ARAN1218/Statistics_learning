@@ -401,27 +401,34 @@ def describe3(data1, data2, data3):
         n = length(data1)
         return kendall / ((2*(2*n+5)) / (9*n*(n-1)))**0.5
     
-    # コルモゴロフ-スミルノフ検定(Kolmogorov-Smirnov test).......................未完成
-    # 帰無仮説：標本分布が仮定した分布と等しい(今回の場合は正規分布)
-    # 対立仮説：標本分布が仮定した分布と異なる(今回の場合は正規分布)
-#     def kolmogorov_smirnov_test(data):
-#         n = sum_value(data)
-#         l = length(data)
-#         m = mean(data)
-#         std = std_s(data)
-#         dev = n / l
-#         data = data[:-1]
+#     # コルモゴロフ-スミルノフ検定のために累積分布のリストを作成する
+#     def cumulative_distribution(data, data_len):
+#         data_cd = [0]
+#         data_sorted = quick_sort(data)
+#         #data_sorted[0], data_sorted[data_len-1] = 0, 1.0
         
-#         Fo, Ft, FoFt = 0, 0, []
-#         for d in data:
-#             Fo += d / n
-#             Ft += dev / n
-#             FoFt += [Fo - st.norm.cdf(x=Ft, loc=m, scale=std)]
-#             #print(st.norm.cdf(x=Ft, loc=m, scale=std))
-#         FoFt = make_abs(FoFt)
-#         #print(FoFt)
-#         FoFt_max = max_value(FoFt)
-#         return "({:.3f}, {:.3f})".format(FoFt_max, 1.36 / (n)**0.5)
+#         for i in range(1, data_len-1):
+#             if data_sorted[i]!=data_sorted[i-1]:
+#                 data_cd.append(i / data_len)
+#             else:
+#                 data_cd.append(data_cd[i-1])
+#         data_cd.append(1.0)
+        
+#         return data_cd
+    
+#     # コルモゴロフ-スミルノフ検定(Kolmogorov-Smirnov test)
+#     # サンプルサイズが同じなら再現できたけど、それ以外だと難しい...
+#     # 帰無仮説：2つの母集団の累積分布関数が等しい
+#     # 対立仮説：2つの母集団の累積分布関数が異なる
+#     def kolmogorov_smirnov(data1, data2):
+#         n1, n2 = length(data1), length(data2)
+#         data1_cd, data2_cd = cumulative_distribution(data1, n1), cumulative_distribution(data2, n2)
+        
+#         data_cd_sub = [abs(d1-d2) for d1,d2 in zip(data1_cd, data2_cd)]
+#         D = max_value(data_cd_sub)
+#         print(D)
+#         K = D * ((n1*n2) / (n1+n2))**0.5
+#         return "({}, {})".format(K, 1.35)
     
     # バートレット検定(Bartlett test)
     # 母集団に正規性がある3群標本間の等分散性を検定する
@@ -429,7 +436,7 @@ def describe3(data1, data2, data3):
     # 帰無仮説：各群の分散は均一である
     # 対立仮説：各群の分散は均一でない
     # ソース：https://kusuri-jouhou.com/statistics/bartlett.html
-    def bartlett_test(data1, data2, data3):
+    def bartlett(data1, data2, data3):
         n1, n2, n3 = length(data1), length(data2), length(data3)
         v1, v2, v3 = var_s(data1), var_s(data2), var_s(data3)
         N = n1 + n2 + n3
@@ -457,7 +464,7 @@ def describe3(data1, data2, data3):
     # 対立仮説：各群の分散は均一でない
     # ソース：https://ja.wikipedia.org/wiki/ルビーン検定
     # scipyの計算結果と合わないが、一応このサイトの例題と検定統計量の値が同じになった：https://istat.co.jp/sk_commentary/variance/Rubins-test
-    def levene_test(data1, data2, data3):
+    def levene(data1, data2, data3):
         n1, n2, n3 = length(data1), length(data2), length(data3)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
         N = n1 + n2 + n3
@@ -575,7 +582,7 @@ def describe3(data1, data2, data3):
     # クラスカル=ウォリス検定(Kruskal-Wallis test)
     # 同順位がある時の補正がかかっているため、少しだけ高めに検定統計量が計算される
     # ソース：統計学図鑑
-    def kruskalwallis_test(data1, data2, data3):
+    def kruskal_wallis(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         ls = l1 + l2 + l3
         rank_sum, dup_sum = 0, 0
@@ -605,7 +612,7 @@ def describe3(data1, data2, data3):
             data3_ranked += [data_ranked[2]]
         return data1_ranked, data2_ranked, data3_ranked
     
-    # フリードマン検定
+    # フリードマン検定(Friedman test)
     # ソフトウェアの計算では、同順位があった際に検定統計量を少しだけ大きくする調整をしているらしい
     # ソース：https://sixsigmastudyguide.com/friedman-non-parametric-hypothesis-test/
     # サンプルサイズが異なる場合、Errorを返す
@@ -625,7 +632,7 @@ def describe3(data1, data2, data3):
         x20 = (12 / (n*k*(k+1))) * r2 - 3*n*(k+1)
         return x20, k-1
     
-    # テューキー・クレーマーの多重検定(Tukey-Kramer test).........................他の分析ライブラリ等で正確性が検査されていない
+    # テューキー・クレーマー検定(Tukey-Kramer test).........................他の分析ライブラリ等で正確性が検査されていない
     # 群数が多い場合はボンフェローニより有意差が出やすい
     # 母集団の正規性と等分散性であることを要求される
     # 検定統計量はq分布に従い、読み取った値を√2で割った値と比較して高ければ帰無仮説を棄却する。
@@ -651,7 +658,7 @@ def describe3(data1, data2, data3):
         return "({:.3f}, ({}, {}))".format(t1, k, (l-k)), "({:.3f}, ({}, {}))".format(t2, k, (l-k)), "({:.3f}, ({}, {}))".format(t3, k, (l-k))
     
     # 全データ同一ランク付け
-    # スティール・ドゥワスの多重比較のために作成
+    # スティール・ドゥワス検定、スティール検定のために作成
     def rank_all_sd(data1, data2):
         data_linked = list(data1) + list(data2)
         data_linked, dup = rank(data_linked)
@@ -660,10 +667,10 @@ def describe3(data1, data2, data3):
         data2_dec = data_linked[data1_len:]
         return [i**2 for i in data1_dec], [i**2 for i in data2_dec], data1_dec
     
-    # スティール・ドゥワスの多重比較(Steel-Dwass test)
+    # スティール・ドゥワス検定(Steel-Dwass test)
     # テューキー・クレーマー法のノンパラ版
     # ウィルコクソンの順位和検定が基礎となっている
-    # (群数k, ∞)のt分布表の値を√2で割った値が棄却限界値？(ソース参照)
+    # (群数k, ∞)のt分布表の値を√2で割った値が棄却限界値(ソース参照)
     # ソース：https://imnstir.blogspot.com/2012/06/steel-dwassexcel.html
     def steel_dwass(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
@@ -682,18 +689,61 @@ def describe3(data1, data2, data3):
         sd13 = "({:.3f}, {:.3f})".format(abs(V[1][1]-E[1])/(V[1][0])**0.5, 3.31/(2)**0.5)
         sd12 = "({:.3f}, {:.3f})".format(abs(V[2][1]-E[2])/(V[2][0])**0.5, 3.31/(2)**0.5)
         return sd23, sd13, sd12
+    
+    # ダネット検定(Dunnett's test)
+    # 3群以上の比較にて対象群(1つ)と処理群(2つ以上)の組について検定したい時、通常の多重比較よりも棄却域の制限を緩めて検定ができる
+    # 母集団の正規性・等分散性を仮定する
+    # 帰無仮説：対象群と処理群で母平均値に差がない
+    # 対立仮説：対象群と処理群で母平均値に差がある
+    def dunnett(data1, data2, data3):
+        # 統計検定量を求める
+        N = 3
+        n1, n2, n3 = length(data1), length(data2), length(data3)
+        m1, m2, m3 = mean(data1), mean(data2), mean(data3)
+        s2_1, s2_2, s2_3 = var_s(data1), var_s(data2), var_s(data3)
+        
+        s2 = ((n1-1)*s2_1 + (n2-1)*s2_2 + (n3-1)*s2_3) / ((n1+n2+n3)-N)
+        t12 = abs(m1 - m2) / ((1/n1 + 1/n2)*s2)**0.5
+        t13 = abs(m1 - m3) / ((1/n1 + 1/n3)*s2)**0.5
+        
+        return t12, t13
+    
+    # スティール検定(Steel test)
+    # 3群以上の比較にて対象群(1つ)と処理群(2つ以上)の組について検定したい時、通常の多重比較よりも棄却域の制限を緩めて検定ができる
+    # ダネット検定のノンパラ版
+    # 母集団の正規性・等分散性を仮定しない
+    # 帰無仮説：対象群と処理群で母平均値に差がない
+    # 対立仮説：対象群と処理群で母平均値に差がある
+    def steel(data1, data2, data3):
+        n1, n2, n3 = length(data1), length(data2), length(data3)
+        n = n1 + n2 + n3
+        E, V = [], []
+        
+        for first, second in [((data1,n1), (data2,n2)), ((data1,n1), (data3,n3))]:
+            N = first[1] + second[1]
+            E += [(first[1]*(N+1)) / 2]
+            
+            f, s, f2 = rank_all_sd(first[0], second[0])
+            f, s, f2 = sum_value(f), sum_value(s), sum_value(f2)
+            V += [(((first[1]*second[1])/(N*(N-1))) * ((f+s) - ((N*(N+1)**2)/4)), f2)]
+            
+        t12 = abs(V[0][1]-E[0])/(V[0][0])**0.5
+        t13 = abs(V[1][1]-E[0])/(V[1][0])**0.5
+        
+        return t12, t13
 
     
-    bl_x2, bl_df = bartlett_test(data1, data2, data3)
-    le_w, le_df = levene_test(data1, data2, data3)
+    bl_x2, bl_df = bartlett(data1, data2, data3)
+    le_w, le_df = levene(data1, data2, data3)
     bf_w, bf_df = brown_forsythe(data1, data2, data3)
     anova_f, anova_dfw, anova_dfb = anova(data1, data2, data3)
     rm_anova_f, rm_anova_df_model, rm_anova_df_error = rm_anova(data1, data2, data3)
-    kw_h, kw_k = kruskalwallis_test(data1, data2, data3)
+    kw_h, kw_k = kruskal_wallis(data1, data2, data3)
     fm_x20, fm_k = friedman_test(data1, data2, data3)
     tk1, tk2, tk3 = tukey_kramer(data1, data2, data3)
     sd23, sd13, sd12 = steel_dwass(data1, data2, data3)
-    #print(st.kstest(data1, st.norm(loc=mean(data1), scale=std_s(data1)).cdf))
+    dun12, dun13 = dunnett(data1, data2, data3)
+    st12, st13 = steel(data1, data2, data3)
     
     
     df1 = pd.DataFrame({
@@ -732,10 +782,10 @@ def describe3(data1, data2, data3):
         'Spearman_cor_test.t':spearman_cor_test(data2, data3),
         'Kendall_cor':kendall_cor(data2, data3),
         'Kendall_cor_test.z':kendall_cor_test(data2, data3),
-        #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data1),
+        #'Kolmogorov-Smirnov':kolmogorov_smirnov(data2, data3),
         'Jarque-Bara_test.x2':jarque_bera(data1),
-        "Bartlett_test.x2":bl_x2,
-        "Levene_test.F":le_w,
+        "bartlett.x2":bl_x2,
+        "levene.F":le_w,
         "Brown-Forsythe_test.F":bf_w,
         'ANOVA.F':anova_f,
         'RM_ANOVA.F':rm_anova_f,
@@ -781,17 +831,19 @@ def describe3(data1, data2, data3):
         'Spearman_cor_test.t':spearman_cor_test(data1, data3),
         'Kendall_cor':kendall_cor(data1, data3),
         'Kendall_cor_test.z':kendall_cor_test(data1, data3),
-        #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data2),
+        #'Kolmogorov-Smirnov':kolmogorov_smirnov(data1, data3),
         'Jarque-Bara_test.x2':jarque_bera(data2),
-        "Bartlett_test.x2":bl_df,
-        "Levene_test.F":le_df,
+        "bartlett.x2":bl_df,
+        "levene.F":le_df,
         "Brown-Forsythe_test.F":bf_df,
         'ANOVA.F':anova_dfw,
         'RM_ANOVA.F':rm_anova_df_model,
         'Kruskal-Wallis_test.H':kw_k,
         "Friedman_test.Q":fm_k,
         "Tukey-kramer_test.q":tk2,
-        "Steel-dwass_test.t":sd13
+        "Steel-dwass_test.t":sd13,
+        "Dunnett_test.t":dun12,
+        "Steel_test.t":st12
     }, index=["data2"]).T
     
     df3 = pd.DataFrame({
@@ -830,12 +882,14 @@ def describe3(data1, data2, data3):
         'Spearman_cor_test.t':spearman_cor_test(data1, data2),
         'Kendall_cor':kendall_cor(data1, data2),
         'Kendall_cor_test.z':kendall_cor_test(data1, data2),
-        #'Kolmogorov-Smirnov test':kolmogorov_smirnov_test(data3),
+        #'Kolmogorov-Smirnov':kolmogorov_smirnov(data1, data2),
         'Jarque-Bara_test.x2':jarque_bera(data3),
         'ANOVA.F':anova_dfb,
         'RM_ANOVA.F':rm_anova_df_error,
         "Tukey-kramer_test.q":tk3,
-        "Steel-dwass_test.t":sd12
+        "Steel-dwass_test.t":sd12,
+        "Dunnett_test.t":dun13,
+        "Steel_test.t":st13
     }, index=["data3"]).T
     
     # 結果出力
