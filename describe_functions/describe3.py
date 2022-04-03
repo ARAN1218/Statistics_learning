@@ -581,6 +581,8 @@ def describe3(data1, data2, data3):
     
     # クラスカル=ウォリス検定(Kruskal-Wallis test)
     # 同順位がある時の補正がかかっているため、少しだけ高めに検定統計量が計算される
+    # 帰無仮説：各群で母中央値に差がない
+    # 対立仮説：各群で母中央値に差がある
     # ソース：統計学図鑑
     def kruskal_wallis(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
@@ -614,6 +616,8 @@ def describe3(data1, data2, data3):
     
     # フリードマン検定(Friedman test)
     # ソフトウェアの計算では、同順位があった際に検定統計量を少しだけ大きくする調整をしているらしい
+    # 帰無仮説：各群で母中央値に差がない
+    # 対立仮説：各群で母中央値に差がある
     # ソース：https://sixsigmastudyguide.com/friedman-non-parametric-hypothesis-test/
     # サンプルサイズが異なる場合、Errorを返す
     def friedman_test(data1, data2, data3):
@@ -637,6 +641,8 @@ def describe3(data1, data2, data3):
     # 母集団の正規性と等分散性であることを要求される
     # 検定統計量はq分布に従い、読み取った値を√2で割った値と比較して高ければ帰無仮説を棄却する。
     # テューキーHSD法(Tukey’s honestly significant difference test)ではサンプルサイズが同数であることも要求される
+    # 帰無仮説：各群で母平均値に差がない
+    # 対立仮説：各群で母平均値に差がある
     # ソース①：統計学図鑑
     def tukey_kramer(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
@@ -670,8 +676,10 @@ def describe3(data1, data2, data3):
     # スティール・ドゥワス検定(Steel-Dwass test)
     # テューキー・クレーマー法のノンパラ版
     # ウィルコクソンの順位和検定が基礎となっている
-    # (群数k, ∞)のt分布表の値を√2で割った値が棄却限界値(ソース参照)
-    # ソース：https://imnstir.blogspot.com/2012/06/steel-dwassexcel.html
+    # 帰無仮説：各群で母平均値に差がない
+    # 対立仮説：各群で母平均値に差がある
+    # この関数では3群で固定されているため、q(a,φE,α)=q(3,∞,0.05)=3.314を√2で割った値が棄却限界値となる
+    # ソース：統計的多重比較法の基礎
     def steel_dwass(data1, data2, data3):
         l1, l2, l3 = length(data1), length(data2), length(data3)
         n = l1 + l2 + l3
@@ -695,8 +703,9 @@ def describe3(data1, data2, data3):
     # 母集団の正規性・等分散性を仮定する
     # 帰無仮説：対象群と処理群で母平均値に差がない
     # 対立仮説：対象群と処理群で母平均値に差がある
+    # ソース：統計的多重比較法の基礎
     def dunnett(data1, data2, data3):
-        # 統計検定量を求める
+        # 検定統計量を求める
         N = 3
         n1, n2, n3 = length(data1), length(data2), length(data3)
         m1, m2, m3 = mean(data1), mean(data2), mean(data3)
@@ -706,7 +715,25 @@ def describe3(data1, data2, data3):
         t12 = abs(m1 - m2) / ((1/n1 + 1/n2)*s2)**0.5
         t13 = abs(m1 - m3) / ((1/n1 + 1/n3)*s2)**0.5
         
-        return t12, t13
+        # 相関係数ρの値を調整し、棄却限界値を求める
+        p21, p31 = n2/(n2+n1), n3/(n3+n1)
+        p = (p21*p31)**0.5
+        
+        p_dict = {0.1:2.236, 0.3:2.229, 0.5:2.212, 0.7:2.180, 0.9:2.108}
+        p_upper, p_under = 0.1 if p<0.1 else 0.9 if 0.9<p else 0, 0.1 if p<0.1 else 0.9 if 0.9<p else 0
+        if p_upper==0 and p_under==0:
+            for _p in p_dict.keys():
+                if p == _p:
+                    return p_dict[p], t12, t13
+                elif p < _p:
+                    p_upper, p_under = _p, _p-0.2
+        
+        p, p1, p2 = 1/(1-p), 1/(1-p_under), 1/(1-p_upper)
+        d1 = ((p2-p) / (p2-p1)) * p_dict[p_under]
+        d2 = ((p-p1) / (p2-p1)) * p_dict[p_upper]
+        d = d1 + d2
+        
+        return p23, t12, t13
     
     # スティール検定(Steel test)
     # 3群以上の比較にて対象群(1つ)と処理群(2つ以上)の組について検定したい時、通常の多重比較よりも棄却域の制限を緩めて検定ができる
@@ -714,7 +741,10 @@ def describe3(data1, data2, data3):
     # 母集団の正規性・等分散性を仮定しない
     # 帰無仮説：対象群と処理群で母平均値に差がない
     # 対立仮説：対象群と処理群で母平均値に差がある
+    # この関数では3群で固定されているため、d(a,φE,ρ;α)=d(3,∞,ρ;0.05)の内ρだけを調整すれば棄却域が求まる
+    # ソース：統計的多重比較法の基礎
     def steel(data1, data2, data3):
+        # 検定統計量を求める
         n1, n2, n3 = length(data1), length(data2), length(data3)
         n = n1 + n2 + n3
         E, V = [], []
@@ -730,7 +760,25 @@ def describe3(data1, data2, data3):
         t12 = abs(V[0][1]-E[0])/(V[0][0])**0.5
         t13 = abs(V[1][1]-E[0])/(V[1][0])**0.5
         
-        return t12, t13
+        # 相関係数ρの値を調整し、棄却限界値を求める
+        p21, p31 = n2/(n2+n1), n3/(n3+n1)
+        p = (p21*p31)**0.5
+        
+        p_dict = {0.1:2.236, 0.3:2.229, 0.5:2.212, 0.7:2.180, 0.9:2.108}
+        p_upper, p_under = 0.1 if p<0.1 else 0.9 if 0.9<p else 0, 0.1 if p<0.1 else 0.9 if 0.9<p else 0
+        if p_upper==0 and p_under==0:
+            for _p in p_dict.keys():
+                if p == _p:
+                    return p_dict[p], t12, t13
+                elif p < _p:
+                    p_upper, p_under = _p, _p-0.2
+        
+        p, p1, p2 = 1/(1-p), 1/(1-p_under), 1/(1-p_upper)
+        d1 = ((p2-p) / (p2-p1)) * p_dict[p_under]
+        d2 = ((p-p1) / (p2-p1)) * p_dict[p_upper]
+        d = d1 + d2
+        
+        return d, t12, t13
 
     
     bl_x2, bl_df = bartlett(data1, data2, data3)
@@ -742,8 +790,8 @@ def describe3(data1, data2, data3):
     fm_x20, fm_k = friedman_test(data1, data2, data3)
     tk1, tk2, tk3 = tukey_kramer(data1, data2, data3)
     sd23, sd13, sd12 = steel_dwass(data1, data2, data3)
-    dun12, dun13 = dunnett(data1, data2, data3)
-    st12, st13 = steel(data1, data2, data3)
+    dunp, dun12, dun13 = dunnett(data1, data2, data3)
+    std, st12, st13 = steel(data1, data2, data3)
     
     
     df1 = pd.DataFrame({
@@ -792,7 +840,9 @@ def describe3(data1, data2, data3):
         'Kruskal-Wallis_test.H':kw_h,
         "Friedman_test.Q":fm_x20,
         "Tukey-kramer_test.q":tk1,
-        "Steel-dwass_test.t":sd23
+        "Steel-dwass_test.t":sd23,
+        "Dunnett_test.t":dunp,
+        "Steel_test.t":std
     }, index=["data1"]).T
     
     df2 = pd.DataFrame({
@@ -940,9 +990,9 @@ import matplotlib.pyplot as plt
 from scipy import stats as st
 
 # ランダム分布
-data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
-data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
-data3 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data3"])["data3"]
+data1 = pd.DataFrame(np.random.randint(-100,101,100), columns=["data1"])["data1"]
+data2 = pd.DataFrame(np.random.randint(-100,101,100), columns=["data2"])["data2"]
+data3 = pd.DataFrame(np.random.randint(-100,101,100), columns=["data3"])["data3"]
 describe3(data1, data2, data3)
 
 # 既存ライブラリで検証
