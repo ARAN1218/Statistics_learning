@@ -1,8 +1,8 @@
-def wordcloud(df_sentence):  
+def wordcloud(df_sentence, stopwords={}):
+    # 形態素解析の準備
     t = Tokenizer()
+
     noun_list = []
-    
-    # 分かち書き
     for sentence in list(df_sentence):
         for token in t.tokenize(sentence):
             split_token = token.part_of_speech.split(',')
@@ -10,17 +10,20 @@ def wordcloud(df_sentence):
             if split_token[0] == '名詞' or split_token[0] == '形容詞':
                 noun_list.append(token.surface)
 
-    # 品詞リストの要素を半角スペース区切りにする
+    # 名詞リストの要素を空白区切りにする(word_cloudの仕様)
     noun_space = ' '.join(map(str, noun_list))
-    # wordcloudの設定(フォントの設定も同時に行う)
-    wc = WordCloud(background_color="white", font_path="/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc", width=300, height=300)
+    # word cloudの設定(フォントの設定)
+    wc = WordCloud(stopwords=stopwords, background_color="white", font_path="/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc", width=300, height=300)
     wc.generate(noun_space)
-    
-    # プロットの設定
+    # 出力画像の大きさの指定
     plt.figure(figsize=(10,10))
-    plt.tick_params(labelbottom=False, labelleft=False, labelright=False, labeltop=False, length=0)
-    
-    # wordcloudの表示
+    # 目盛りの削除
+    plt.tick_params(labelbottom=False,
+                    labelleft=False,
+                    labelright=False,
+                    labeltop=False,
+                   length=0)
+    # word cloudの表示
     plt.imshow(wc)
     plt.show()
 
