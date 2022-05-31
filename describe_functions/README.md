@@ -183,13 +183,97 @@ $$N$$
 よくある間違いとして「母数」があるが、こちらは分布のパラメータの事を表す。(ex. 正規分布の母数は母平均$\mu$と母分散$\sigma$である。)
 
 ### 合計
-$$\sum_{n=1}^{N}x_n$$
+$$\sum_{i=1}^{n}x_n$$
 データの値の総和のこと。
 
-## 算術平均
-$$\frac{1}{N}\sum_{n=1}^{N}x_n$$
+### 算術平均
+$$\frac{1}{n}\sum_{i=1}^{n}x_i$$
 データの重心のこと。一般的に用いられる平均は算術平均である。  
 外れ値が含まれていたり、分布が歪んでいたりすると、平均はその影響を受けてしまい、データを良く代表する指標とは言えなくなってしまう。このような場合、データの代表地としては中央値を用いる事が適切な場合がある。
+
+### 幾何平均
+$$\sqrt[n]{x_1 \times x_2 \times ... x_i}$$
+比率や割合で変化するときの平均。  
+ex.)過去5年間で物価が10, 20, 30%上昇した時、毎年平均何%上昇しているか...$\sqrt[3]{0.1 \times 0.2 \times 0.3} \approx 22%$
+
+### 調和平均
+$$\bar{x}_H=\frac{n}{\frac{1}{x_1} + \frac{1}{x_2} + \frac{1}{x_n}}$$
+時速の平均等を求める際に用いる。
+ex.)箱根駅伝において、青学の選手は往路19.5km/h, 復路20km/hで走っている。この時の平均時速は$\bar{x}_H=\frac{2}{\frac{1}{19.5} + \frac{1}{20}} \approx 19.7$
+
+### 平均偏差
+$$\frac{1}{n}\sum_{i=1}^{n}|x_i-\bar{x}|$$
+各データから算術平均値を引き、それらの絶対値の算術平均値を求めたものである。  
+平均偏差は平均値から大きく離れたデータへの評価が甘くなってしまったり、[平均値の周りの分布を考える際に数学的に不便である](http://izumi-math.jp/T_Okazaki/110_1_okazaki.pdf)等の理由から、データのバラつきを見る際は主に標準偏差が使われる。
+
+### 母分散
+$$s^2 = \frac{1}{n}\sum_{i=1}^{n}(x_i-\bar{x})^2$$
+
+### 不偏分散
+$$s^2 = \frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2$$
+
+### 母標準偏差
+$$s = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(x_i-\bar{x})^2}$$
+
+### 不偏標準偏差
+$$s = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2}$$
+
+### 標準誤差
+$$e = \sqrt{\frac{\frac{1}{n-1}\sum_{i=1}^{n}(x_i-\bar{x})^2}{n}}$$
+
+### 区間推定（母分散既知）(mean_95cl_known)
+
+
+### 最小値(min)
+$$x_{min}$$
+
+### 第一四分位数(25%)
+$$x_{25}$$
+
+### 中央値(50%)
+$$x_{median}$$
+
+### 第三四分位数(75%)
+$$x_{75}$$
+
+### 最大値(max)
+$$x_{max}$$
+
+### 四分位偏差(25-75%)
+$$x_{75} - x_{25}$$
+
+### ミッドレンジ(mid-range)
+$$\frac{x_{max}+x_{min}}{2}$$
+
+### レンジ(range)
+$$x_{max}-x_{min}$$
+
+### 最頻値(mode)
+$$x_{mode}$$
+
+### ジニ係数(gini)
+
+
+### 歪度(skewness)
+$$\frac{\sqrt{n} \displaystyle \sum_{i = 1}^n (x_i - \overline{x})^3}
+{\left( \displaystyle \sum_{i = 1}^n
+(x_i - \overline{x})^2 \right)^{\frac{3}{2}}}$$
+
+$$\displaystyle　\frac{n}{(n - 1)(n - 2)} \displaystyle \sum_{i = 1}^n 
+\left(\frac{x_i - \overline{x}}{s}\right)^3$$ 
+
+
+### 尖度(kurtosis)
+$$\displaystyle \frac{n\displaystyle \sum_{i = 1}^n (x_i - \overline{x})^4}
+{\left( \displaystyle \sum_{i = 1}^n (x_i - \overline{x})^2 \right)^2}$$
+
+$$\frac{n(n+1)}{(n-1)(n-2)(n-3)} \displaystyle \sum_{i = 1}^n 
+\frac{(x_i - \overline{x})^4}{s^4} - \frac{3(n-1)^2}{(n-2)(n-3)}$$
+
+ある分布が正規分布からどれだけ逸脱しているかを表す統計量。  
+
+
+### ジャック-ベラ検定(検定統計量x2)(Jarque-Bara_test.x2)
 
 
 ## 今後の展望
