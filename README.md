@@ -13,7 +13,7 @@
 
 
 ## 内容
-大まかに**5つ**に分類しています。
+大まかに**6つ**に分類しています。
 
 ### [describe_functions](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/describe_functions)
 - Pandasのdescribeメソッドに感動し、同時に失望したので思いついた関数。あらゆる統計量を網羅的に出力します。
@@ -39,3 +39,6 @@
 - アンケートデータ等のテキストマイニングの手法について、Pythonで実装できるものをまとめました。
 - 環境構築が少々面倒かもしれません...
 
+### [correlation](https://github.com/ARAN1218/Descriptive_statistics_functions/tree/main/correlation)
+- ピアソン積率相関係数やスピアマン順位相関係数等の適用しやすい相関係数以外の相関係数を実装しました。
+- 名義尺度同士でも相関を見れます。(クラメールの連関係数)
