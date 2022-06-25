@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 # 相関比
 # 名義尺度と感覚尺度の相関係数を算出する
 def correlation_ratio(class_name, value_name, data):
