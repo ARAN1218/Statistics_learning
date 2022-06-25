@@ -10,7 +10,6 @@ def multiple_correlation(response_name, explanatory_name_list, data, ddof=1):
     all_name_list.insert(0,response_name)
     df_multi = data[all_name_list]
     df_S = data[explanatory_name_list]
-    display(df_multi)
     
     # 分散共分散行列等の準備
     vc_matrix = df_multi.cov(ddof=ddof)
@@ -31,4 +30,7 @@ def multiple_correlation(response_name, explanatory_name_list, data, ddof=1):
 df_test = pd.DataFrame([np.random.randint(0,100,10), np.random.randint(0,100,10), np.random.randint(0,100,10)]
                        , index=['response', 'ex1', 'ex2']).T
 
+print('入力：')
+display(df_test)
+print('出力：')
 multiple_correlation('response', ['ex1', 'ex2'], df_test, ddof=1)
