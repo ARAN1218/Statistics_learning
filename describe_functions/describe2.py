@@ -547,7 +547,8 @@ def describe2(data1, data2):
     # 対応のない2群間の中央値に差があるかを検定する
     # サンプルサイズが小さい時(n<=20)、検定統計量UはMann-Whitney検定表に基づいてp値を算出する
     # サンプルサイズが十分に大きい時(n>20)、検定統計量zは標準正規分布に従うかどうかを考え、正規分布表に基づいてp値を算出する
-    # 注意：通常とは違い、検定統計量 < Mann-Whitney検定表の棄却域の時に帰無仮説を棄却する
+    # 注意1：通常とは違い、検定統計量 < Mann-Whitney検定表の棄却域の時に帰無仮説を棄却する
+    # 注意2：2つの分布の分散が異なる場合などに頑健でないことが知られている
     # 両側検定なので、検定統計量が負の値でも絶対値を取って考えれば良い
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
@@ -572,6 +573,7 @@ def describe2(data1, data2):
     # ウィルコクソンの順位和検定の数表を参照して有意差があるかどうか判定する
     # 数表から読み取ったa/bという表示は、検定統計量がa以下またはb以上の時に帰無仮説を棄却できるという意味である
     # マン=ホイットニーのU検定と実質的に同じ計算をしているため、同じ結果が返ってくるはずである
+    # 注意：2つの分布の分散が異なる場合などに頑健でないことが知られている
     # 帰無仮説：2群間の母集団は同じである
     # 対立仮説：2群間の母集団は異なる
     def wilcoxon_rstest(data1, data2):
@@ -587,6 +589,21 @@ def describe2(data1, data2):
         
         vw = (n1*n2*(n1+n2+1)) / 12
         return (ew-w) / (vw)**0.5
+    
+    # ブルンナームンツェル検定(Brunner-Munzel test)
+    # Wilcoxon-Mann-Whitney検定とは違い、対象の等分散性が仮定できなくてもロバストな検定手法
+    # 参考：https://oku.edu.mie-u.ac.jp/~okumura/stat/brunner-munzel.html
+    def brunner_munzel_test(data1, data2):
+        data1_ranked, data2_ranked = rank(data1, delite=0)[0], rank(data2, delite=0)[0]
+        data1_ranked_all, data2_ranked_all = rank_all(data1, data2)
+        n1, n2 = length(data1), length(data2)
+        m1_all, m2_all = mean(data1_ranked_all), mean(data2_ranked_all)
+        m1, m2 = (n1+1)/2, (n2+1)/2
+        s21 = (1/(n1-1)) * sum_value((pd.Series(data1_ranked_all) - pd.Series(data1_ranked) - m1_all + m1)**2)
+        s22 = (1/(n2-1)) * sum_value((pd.Series(data2_ranked_all) - pd.Series(data2_ranked) - m2_all + m2)**2)
+        
+        W = (n1*n2*(m2_all-m1_all)) / ((n1+n2)*(n1*s21 + n2*s22)**0.5)
+        return W
     
     # 符号検定(Sign test)
     # 対応のある2群間の中央値に差があるかを検定する(質的データである名義・順位尺度にも使える)
@@ -712,6 +729,7 @@ def describe2(data1, data2):
         'Mood_test.z':mood_test(data1, data2),
         'Mann-Whitney_utest.U':mannwhitney_utest(data1, data2),
         'Wilcoxon_rstest.Tw':wilcoxon_rstest(data1, data2),
+        'Brunner-Munzel.W':brunner_munzel_test(data1, data2),
         'sign_test.r':sign_test(data1, data2),
         'Wilcoxon_srtest.Tw':wilcoxon_srtest_Tw
     }, index=["data1"]).T
@@ -842,7 +860,7 @@ from scipy import stats as st
 # 確率分布からデータを生成
 data1 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data1"])["data1"]
 data2 = pd.DataFrame(np.random.randint(-100, 101, 100), columns=["data2"])["data2"]
-describe2(data1, list(data2))
+describe2(data1, data2)
 
 # 既存のライブラリで検証
 print("PearsonrResult", st.pearsonr(data1, data2))
