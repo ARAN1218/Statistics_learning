@@ -96,6 +96,7 @@
 - ウェルチのt検定(検定統計量t)(Welch.ttest.t)
 - マン=ホイットニーのU検定(検定統計量U)(Mann-whitney_utest.U)
 - ウィルコクソンの順位和検定(検定統計量Tw)(Wilcoxon_rstest.Tw)
+- ブルンナームンツェル検定(検定統計量W)(brunner_munzel_test.W)
 - 符号検定(検定統計量r)(sign_test.r)
 - ウィルコクソンの符号順位検定(検定統計量Tw)(Wilcoxon_srtest.Tw)
 
