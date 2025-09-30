@@ -1,4 +1,8 @@
 def MANCOVA(df, x, y_list, cov_list):
+  import numpy as np
+  import pandas as pd
+  import scipy.stats as st
+  from scipy.optimize import brentq
   """
   MANCOVAを実行する関数
 
@@ -24,7 +28,7 @@ def MANCOVA(df, x, y_list, cov_list):
   df_mean = df.copy()
   df_mean = df.groupby(x).mean()
   mean_all = np.array(df.drop(x, axis=1).mean())
-  
+
   def calc_T(df, df_mean):
     """
     共変量を加えた全体変動行列Tを計算する。
@@ -171,14 +175,78 @@ def MANCOVA(df, x, y_list, cov_list):
   F_value_H, df1_H, df2_H = Hotelling_F_approximation_formula()
   F_value_R, df1_R, df2_R = Roys_F_approximation_formula()
 
-  # 求めたF値からp値を求める  
+  # 求めたF値からp値を求める
   p_value_W = 1 - st.f.cdf(F_value_W, dfn=df1_W, dfd=df2_W)
   p_value_P = 1 - st.f.cdf(F_value_P, dfn=df1_P, dfd=df2_P)
   p_value_H = 1 - st.f.cdf(F_value_H, dfn=df1_H, dfd=df2_H)
   p_value_R = 1 - st.f.cdf(F_value_R, dfn=df1_R, dfd=df2_R)
 
+  # Step 7: 効果量を計算する
+  s = np.sqrt((p**2 * (k-1)**2 - 4)/(p**2 + (k-1)**2 - 5)) if (p**2 + (k-1)**2 - 5)!=0 else 1
+  effect_size_lambda = 1 - Wilks_lambda**(1/s)
+  s = min(p, k-1)
+  effect_size_V = pillais_trace_V / s
+  effect_size_T = (hotelling_lawley_trace_T / s) / (1 + ((hotelling_lawley_trace_T / s)))
+  effect_size_theta = roys_greatest_root_theta / (1 + roys_greatest_root_theta)
 
-  # Step 7: 分散分析表を作る
+  # Step 8: 効果量の信頼区間を計算する
+  def get_ci_for_eta_squared(F_obs, df1, df2, alpha=0.05):
+      """
+      観測されたF値から、多変量偏イータ二乗の効果量の信頼区間を計算する。
+
+      params:
+          F_obs: 観測されたF値
+          df1: 分子の自由度
+          df2: 分母の自由度
+          alpha: 有意水準 (例: 0.05 -> 95%信頼区間)
+
+      return:
+          (効果量の下限値, 効果量の上限値)
+      """
+      
+      # --- Step 2: 非心パラメータ(NCP)の信頼区間を求める ---
+      
+      # 信頼区間の下限となる非心パラメータ(ncp_l)を探すための関数
+      # 観測されたF値が97.5パーセンタイル点となるような非心F分布を探す
+      def lower_bound_func(ncp):
+          return st.ncf.cdf(F_obs, df1, df2, nc=ncp) - (1 - alpha / 2)
+
+      # 信頼区間の上限となる非心パラメータ(ncp_u)を探すための関数
+      # 観測されたF値が2.5パーセンタイル点となるような非心F分布を探す
+      def upper_bound_func(ncp):
+          return st.ncf.cdf(F_obs, df1, df2, nc=ncp) - (alpha / 2)
+
+      try:
+          # F値が有意でない場合、下限は0になる
+          if st.f.sf(F_obs, df1, df2) > alpha / 2:
+              ncp_l = 0
+          else:
+              # brentqは、関数が0になる点を効率的に探すソルバー
+              ncp_l = brentq(lower_bound_func, a=0, b=10000)
+      except (ValueError, RuntimeError):
+          ncp_l = 0 # エラーが発生した場合も下限は0とする
+
+      try:
+          # brentqを使って上限値を探す
+          ncp_u = brentq(upper_bound_func, a=0, b=10000)
+      except (ValueError, RuntimeError):
+          ncp_u = 0 # エラーの場合は0
+
+      # --- Step 3: 非心パラメータを効果量(偏イータ二乗)に変換する ---
+      
+      # 変換公式: η_p^2 = λ / (λ + df1 + df2 + 1)
+      eta_sq_lower = ncp_l / (ncp_l + df1 + df2 + 1)
+      eta_sq_upper = ncp_u / (ncp_u + df1 + df2 + 1)
+      
+      return (eta_sq_lower, eta_sq_upper)
+
+  # 信頼区間を計算
+  ci_W = get_ci_for_eta_squared(F_value_W, df1_W, df2_W)
+  ci_P = get_ci_for_eta_squared(F_value_P, df1_P, df2_P)
+  ci_H = get_ci_for_eta_squared(F_value_H, df1_H, df2_H)
+  ci_R = get_ci_for_eta_squared(F_value_R, df1_R, df2_R)
+
+  # Step 9: 分散分析表を作る
   mancova_results = {
       "Statistic": ["Wilks' Lambda", "Pillai's Trace", "Hotelling-Lawley Trace", "Roy's Greatest Root"],
       "Value": [Wilks_lambda, pillais_trace_V, hotelling_lawley_trace_T, roys_greatest_root_theta],
@@ -186,6 +254,8 @@ def MANCOVA(df, x, y_list, cov_list):
       "Den DF": [df2_W, df2_P, df2_H, df2_R],  # 近似による自由度(分子)
       "F Value": [F_value_W, F_value_P, F_value_H, F_value_R],
       "p Value": [p_value_W, p_value_P, p_value_H, p_value_R],
+      "Effect Size": [effect_size_lambda, effect_size_V, effect_size_T, effect_size_theta],
+      "Effect Size 95%CL": [ci_W, ci_P, ci_H, ci_R]
   }
   mancova_df = pd.DataFrame(mancova_results)
 
