@@ -81,10 +81,12 @@
   2.  ECDFとなめらかな理論分布のCDF(2標本の場合はもう片方のデータのECDF)を比較し、その**最大垂直距離**を**検定統計量 $D$** として計算します。
   3.  $D$の値とサンプルサイズ $n$ から、**コルモゴロフ分布**を用いてp値を算出します。（※正規性の検定でパラメータをデータから推定した場合は、**リリフォース補正**が必要です）
 - **対応ライブラリ**: `scipy.stats.kstest` (リリフォース補正版は`statsmodels.stats.diagnostic.lilliefors`)
-
+- **補足**: コルモゴロフ＝スミルノフ検定は通常連続分布にのみ適用でき、離散分布は対象外である。ただし、 `scipy.stats.kstest` は `mode='exact'` という引数を持っており、これを使うことで離散分布に対する正確なp値を計算してくれます。
 
 
 # 参考文献
 - D'Agostino, R. B.: "Transformation to normality of the null distribution of g1". Biometrika(1970).
 - Anscombe, F. J., & Glynn, W. J.: "Distribution of the kurtosis statistic b2 for normal samples". Biometrika(1983).
 - D'Agostino, R. B., & Pearson, E. S.: "Tests for departure from normality. Empirical results for the distributions of b2 and √b1", Biometrika(1973).
+- Shapiro, S. S., & Wilk, M. B.: An analysis of variance test for normality (complete samples), Biometrika(1965).
+- J. P. Royston: Algorithm AS 181: The W Test for Normality, Journal of the Royal Statistical Society. Series C (Applied Statistics)(1982).
